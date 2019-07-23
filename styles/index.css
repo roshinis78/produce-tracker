@@ -1,0 +1,23 @@
+body {
+    background-image: url('../images/aubergines-bio-cabbage-5205.jpg');
+    background-size: 100%;
+}
+
+.bg-semitransparent {
+    background:rgba(0, 0, 0, 0.795);
+    color: white;
+}
+
+.w-90 {
+    width: 90%;
+}
+
+@media (min-width: 768px) {
+    .w-md-60 {
+        width: 60%;
+    }
+}
+
+.special-link a {
+    color: #00B0FF;
+}

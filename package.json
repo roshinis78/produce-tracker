@@ -1,0 +1,27 @@
+{
+  "name": "produce-tracker",
+  "version": "1.0.0",
+  "description": "Analysis of global production and trade statistics.",
+  "main": "index.html",
+  "scripts": {
+    "start": "npm run lite",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lite": "lite-server"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/roshinis78/produce-tracker.git"
+  },
+  "author": "Roshini Saravanakumar",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/roshinis78/produce-tracker/issues"
+  },
+  "homepage": "https://github.com/roshinis78/produce-tracker#readme",
+  "devDependencies": {
+    "lite-server": "^2.5.3"
+  },
+  "dependencies": {
+    "bootstrap": "^4.3.1"
+  }
+}
