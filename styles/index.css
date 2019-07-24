@@ -18,6 +18,17 @@ body {
     }
 }
 
-.special-link a {
-    color: #00B0FF;
+.intro-container {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    padding: 1rem 1rem 1rem 0rem;
+}
+
+.intro-container a {
+    color: #d34514;
+}
+
+.intro-container a:hover {
+    color: #b43b13;   
 }
