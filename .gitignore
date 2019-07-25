@@ -1,3 +1,7 @@
 # NODE.JS #
 ###########
 node_modules
+
+# JUPYTER NOTEBOOK #
+####################
+scripts/data-organization/.ipynb_checkpoints
