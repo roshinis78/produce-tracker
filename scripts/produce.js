@@ -13,7 +13,7 @@ $(document).ready(function() {
 var width = $(".row").width();
 console.log(width);
 const height = 600;
-const margin = { top: 10, left: 100, bottom: 40, right: 10 };
+const margin = { top: 90, left: 100, bottom: 40, right: 10 };
 
 const bar = {
   width: 20,
@@ -23,6 +23,10 @@ const bar = {
     import: "#50b131",
     export: "#3ba3ec"
   }
+};
+
+const axis = {
+  color: "#ced4da"
 };
 
 var cachedProduceData = null;
@@ -113,7 +117,7 @@ function updateDisplay() {
   var quantityAxis = produceSVG
     .append("g")
     .attr("id", "quantity-axis")
-    .selectAll("quantity-axis-lines")
+    .selectAll("quantity-axis-elements")
     .data(quantityScale.ticks())
     .enter();
 
@@ -127,7 +131,7 @@ function updateDisplay() {
     .attr("y2", function(d, i) {
       return quantityScale(d);
     })
-    .attr("stroke", "#ced4da");
+    .attr("stroke", axis.color);
 
   quantityAxis
     .append("text")
@@ -140,33 +144,53 @@ function updateDisplay() {
       return quantityScale(d) - 10;
     });
 
-  console.log(quantityScale.ticks());
-
   // redraw the country axis
   d3.select("#country-axis").remove();
-  var top10Countries = [
-    "",
-    ...cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
+  d3.selectAll(".country-label").remove();
+  var top10Countries =
+    cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
       selectedRole
-    ]["countries"]
-  ];
+    ]["countries"];
 
   var countryScale = d3
     .scaleOrdinal()
     .domain(top10Countries)
     .range(
       d3.range(
-        margin.left,
+        margin.left + 20,
         width - margin.right,
-        (width - margin.right - margin.left) / top10Countries.length
+        (width - margin.right - margin.left - 20) / top10Countries.length
       )
     );
 
-  produceSVG
+  var countryAxis = produceSVG
     .append("g")
-    .call(d3.axisBottom(countryScale))
     .attr("id", "country-axis")
-    .attr("transform", "translate(0, " + (height - margin.bottom) + ")");
+    .selectAll("country-axis-elements")
+    .data(countryScale.domain())
+    .enter()
+    .append("line")
+    .attr("x1", function(d, i) {
+      return countryScale(d) - bar.width - bar.spacing;
+    })
+    .attr("y1", margin.top)
+    .attr("x2", function(d, i) {
+      // position label with popper
+      var label = document.createElement("p");
+      new Popper(this, label, {
+        placement: "top"
+      });
+      label.className = "country-label";
+      label.innerHTML = d;
+      document.getElementById("produce-poppers").appendChild(label);
+      $(".country-label").css(
+        "max-width",
+        bar.width * 3 + bar.spacing * 2 + 20
+      );
+      return countryScale(d) + bar.width + bar.spacing + bar.width;
+    })
+    .attr("y2", margin.top)
+    .attr("stroke", axis.color);
 
   // redraw the bars
   d3.select("#produce-bars").remove();
