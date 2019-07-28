@@ -12,7 +12,11 @@ $(document).ready(function() {
 // Visualization constants and variables
 var width = $(".container").width();
 const height = 600;
-const margin = { top: 50, left: 70, bottom: 100, right: 10 };
+const margin = { top: 50, left: 70, bottom: 100, right: 50 };
+
+const bar = {
+  height: 10
+};
 
 var cachedProduceData = null;
 var produceVisualization = null;
@@ -31,6 +35,14 @@ function visualizeProduce() {
   // add an event listener for the produce select
   produceSelect.addEventListener("change", updateYearOptions);
 
+  // add display update event listeners for the role and year selects
+  document
+    .getElementById("role-select")
+    .addEventListener("change", updateDisplay);
+  document
+    .getElementById("year-select")
+    .addEventListener("change", updateDisplay);
+
   produceSVG = d3
     .select("#produce-analysis-chart")
     .append("svg")
@@ -44,12 +56,12 @@ function visualizeProduce() {
       0,
       hundredMillionCeiling(cachedProduceData["largest_quantity"]) + 1
     ])
-    .range([height - margin.bottom, margin.top + 1]);
+    .range([margin.left, width - margin.right]);
 
   produceSVG
     .append("g")
-    .call(d3.axisLeft(quantityScale))
-    .attr("transform", "translate(" + margin.left + ",0)");
+    .call(d3.axisBottom(quantityScale))
+    .attr("transform", "translate(0, " + (height - margin.bottom) + ")");
 
   updateYearOptions();
 }
@@ -81,13 +93,6 @@ function updateDisplay() {
 
   // redraw the bottom country axis
   d3.select("#country-axis").remove();
-
-  console.log(
-    cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
-      selectedRole
-    ]["countries"]
-  );
-
   var top10Countries = [
     "",
     ...cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
@@ -95,22 +100,53 @@ function updateDisplay() {
     ]["countries"],
     ""
   ];
+
   var countryScale = d3
     .scaleOrdinal()
     .domain(top10Countries)
     .range(
       d3.range(
-        margin.left,
-        width - margin.right,
-        (width - margin.right - margin.left) / top10Countries.length
+        margin.top,
+        height - margin.bottom,
+        (height - margin.bottom - margin.top) / top10Countries.length
       )
     );
 
   produceSVG
     .append("g")
-    .call(d3.axisBottom(countryScale))
+    .call(d3.axisLeft(countryScale))
     .attr("id", "country-axis")
-    .attr("transform", "translate(0, " + (height - margin.bottom) + ")");
+    .attr("transform", "translate(" + margin.left + ",0)");
+
+  // redraw the bars
+  d3.select("#produce-bars").remove();
+  var svg = produceSVG.append("g").attr("id", "produce-bars");
+  svg
+    .selectAll("bars")
+    .data(
+      cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
+        selectedRole
+      ]
+    )
+    .enter()
+    .append("rect")
+    .attr("x", 0)
+    .attr("y", function(d, i) {
+      return countryScale(d["countries"][i]);
+    })
+    .attr("width", function(d, i) {
+      return quantityScale(d["production"][i]);
+    })
+    .attr("height", function(d, i) {});
+
+  console.log(
+    "Displaying " +
+      selectedRole +
+      " of " +
+      selectedProduce +
+      " in " +
+      selectedYear
+  );
 }
 
 /*****************************************************************************************/
