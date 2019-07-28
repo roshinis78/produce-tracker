@@ -13,7 +13,7 @@ $(document).ready(function() {
 var width = $(".row").width();
 console.log(width);
 const height = 600;
-const margin = { top: 0, left: 100, bottom: 40, right: 10 };
+const margin = { top: 10, left: 100, bottom: 40, right: 10 };
 
 const bar = {
   width: 20,
@@ -110,11 +110,37 @@ function updateDisplay() {
     ])
     .range([height - margin.bottom, margin.top]);
 
-  produceSVG
+  var quantityAxis = produceSVG
     .append("g")
-    .call(d3.axisLeft(quantityScale))
     .attr("id", "quantity-axis")
-    .attr("transform", "translate(" + margin.left + ",0)");
+    .selectAll("quantity-axis-lines")
+    .data(quantityScale.ticks())
+    .enter();
+
+  quantityAxis
+    .append("line")
+    .attr("x1", 0)
+    .attr("y1", function(d, i) {
+      return quantityScale(d);
+    })
+    .attr("x2", width)
+    .attr("y2", function(d, i) {
+      return quantityScale(d);
+    })
+    .attr("stroke", "#ced4da");
+
+  quantityAxis
+    .append("text")
+    .text(function(d, i) {
+      const oneMillion = 1000000;
+      return d / oneMillion + "M";
+    })
+    .attr("x", 0)
+    .attr("y", function(d, i) {
+      return quantityScale(d) - 10;
+    });
+
+  console.log(quantityScale.ticks());
 
   // redraw the country axis
   d3.select("#country-axis").remove();
