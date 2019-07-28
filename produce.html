@@ -19,7 +19,7 @@
 
 <body>
     <!-- bootstrap navbar repurposed as header -->
-    <nav class='navbar navbar-dark navbar-expand-md fixed-top bg-orange'>
+    <nav class='navbar navbar-light navbar-expand-md bg-white navbar-border'>
         <div class='container'>
             <button class='navbar-toggler mr-2' data-toggle='collapse' data-target='#navigation-links'>
                 <span class='navbar-toggler-icon'></span>
@@ -30,61 +30,77 @@
             <div class='collapse navbar-collapse' id='navigation-links'>
                 <ul class='navbar-nav ml-auto'>
                     <li class='nav-item'><a class='nav-link' href='index.html'>Introduction</a></li>
-                    <li class='nav-item'><a class='nav-link' href='#'>Produce Analysis</a></li>
+                    <li class='nav-item active'><a class='nav-link' href='#'>Produce Analysis</a></li>
                 </ul>
             </div>
         </div>
     </nav>
 
-    <div class='container mt-5'>
+    <div class='container mt-3'>
         <!-- Introduction -->
-        <p>
-            <strong>Meet the Key Players!</strong>
-            Welcome to the <span class='highlight'>worldview</span>! Use this interactive map to look up your favorite
-            fruits and vegetables to see which countries produce these crops and where they are exporting them to. Is
-            your country a top importer of this produce?
-        </p>
-        <p>Keep an eye out for countries that show up as both the top producer and top exporter for a certain crop!</p>
-
-        <hr>
+        <h1 class='viz-title'>Meet the Key Players</h1>
 
         <!-- Visualization user control input -->
-        <form class='d-flex flex-wrap'>
-            <select class='form-control d-none d-md-block col-2' id='role-select'>
-                <option id='importer-option' selected>Importers</option>
-                <option id='exporter-option'>Exporters</option>
-                <option id='producer-option'>Producers</option>
-            </select>
-
-            <div class='btn-group d-flex d-md-none col-12 mb-2 w-100 p-0 justify-content-center' role='group'
-                id='role-select-mobile'>
-                <button class='btn btn-primary pl-3 pr-3' type='button' id='importer-button'>Importers</button>
-                <button class='btn btn-light pl-3 pr-3' type='button' id='exporter-button'>Exporters</button>
-                <button class='btn btn-light pl-3 pr-3' type='button' id='producer-button'>Producers</button>
-            </div>
-
-            <div class='form-group mb-0 col-6 col-md-4 pr-0 pl-0 ml-1'>
-                <div class='d-flex'>
-                    <label class='col-2 mr-2 mr-md-0 align-self-center mt-1' for='produce-select'>of</label>
-                    <select class='form-control col-10' id='produce-select'>
-                        <!-- Will be filled by js with set of produce -->
+        <div class='row justify-content-center'>
+            <form class='form-inline'>
+                <div class='form-group'>
+                    <label class='pl-2 pr-2' for='role-select'>Top</label>
+                    <select class='form-control d-none d-md-block' id='role-select'>
+                        <option selected>Producers</option>
+                        <option>Importers</option>
+                        <option>Exporters</option>
                     </select>
                 </div>
-            </div>
-
-            <div class='form-group mb-0 col-5 col-md-3 pl-0 ml-2'>
-                <div class='d-flex'>
-                    <label class='col-2 mr-2 mr-md-0 align-self-center mt-1' for='year-select'>in</label>
-                    <select class='form-control col-10' id='year-select'>
-                        <!-- Will be filled by js with set of years -->
-                    </select>
+    
+                <div class='btn-group d-flex d-md-none' role='group'
+                    id='role-select-mobile'>
+                    <button class='btn btn-primary pl-3 pr-3' type='button' id='importer-button'>Importers</button>
+                    <button class='btn btn-light pl-3 pr-3' type='button' id='exporter-button'>Exporters</button>
+                    <button class='btn btn-light pl-3 pr-3' type='button' id='producer-button'>Producers</button>
                 </div>
-            </div>
-        </form>
+    
+                <div class='form-group'>
+                    <div class='d-flex'>
+                        <label class='pl-2 pr-2' for='produce-select'>of</label>
+                        <select class='form-control' id='produce-select'>
+                            <!-- Will be filled by js with set of produce -->
+                        </select>
+                    </div>
+                </div>
+    
+                <div class='form-group'>
+                    <div class='d-flex'>
+                        <label class='pl-2 pr-2' for='year-select'>in</label>
+                        <select class='form-control' id='year-select'>
+                            <!-- Will be filled by js with set of years -->
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Legend will go here -->
+        <div class='row justify-content-center mt-3' id='produce-legend'>
+            <p>
+                <span class='pr-3'>
+                    <i class='fa fa-square pr-1 production-color'></i>
+                    Units Produced
+                </span>
+                <span class='pr-3'>
+                    <i class='fa fa-square pr-1 import-color'></i>
+                    Units Imported
+                </span>
+                <span>
+                    <i class='fa fa-square pr-1 export-color'></i>
+                    Units Exported
+                </span>
+            </p>
+        </div>
 
         <!-- Visualization will be generated here -->
-        <div id='produce-analysis-chart'></div>
-
+        <div class='row'>
+            <div id='produce-chart'></div>
+        </div>
 
     </div>
 

@@ -10,12 +10,19 @@ $(document).ready(function() {
 });
 
 // Visualization constants and variables
-var width = $(".container").width();
+var width = $(".row").width();
+console.log(width);
 const height = 600;
-const margin = { top: 50, left: 150, bottom: 100, right: 50 };
+const margin = { top: 0, left: 100, bottom: 40, right: 10 };
 
 const bar = {
-  height: 10
+  width: 20,
+  spacing: 5,
+  colors: {
+    production: "#f77189",
+    import: "#50b131",
+    export: "#3ba3ec"
+  }
 };
 
 var cachedProduceData = null;
@@ -31,6 +38,9 @@ function visualizeProduce() {
   cachedProduceData["produce"].forEach(function(produce) {
     var option = document.createElement("option");
     option.innerHTML = produce;
+    if (produce == "Maize") {
+      option.selected = true;
+    }
     produceSelect.appendChild(option);
   });
 
@@ -45,12 +55,17 @@ function visualizeProduce() {
     .getElementById("year-select")
     .addEventListener("change", updateDisplay);
 
+  // fill in the legend colors
+  $(".production-color").css("color", bar.colors.production);
+  $(".import-color").css("color", bar.colors.import);
+  $(".export-color").css("color", bar.colors.export);
+
+  // draw the svg
   produceSVG = d3
-    .select("#produce-analysis-chart")
+    .select("#produce-chart")
     .append("svg")
     .attr("width", width)
-    .attr("height", height)
-    .append("g");
+    .attr("height", height);
 
   updateYearOptions();
 }
@@ -69,6 +84,9 @@ function updateYearOptions() {
   selectedData["available_years"].forEach(function(year) {
     var option = document.createElement("option");
     option.innerHTML = year;
+    if (year == 2016) {
+      option.selected = true;
+    }
     yearSelect.appendChild(option);
   });
 
@@ -90,22 +108,21 @@ function updateDisplay() {
         "Producers"
       ]["production"][0] + 1
     ])
-    .range([margin.left, width - margin.right]);
+    .range([height - margin.bottom, margin.top]);
 
   produceSVG
     .append("g")
-    .call(d3.axisBottom(quantityScale))
+    .call(d3.axisLeft(quantityScale))
     .attr("id", "quantity-axis")
-    .attr("transform", "translate(0, " + (height - margin.bottom) + ")");
+    .attr("transform", "translate(" + margin.left + ",0)");
 
-  // redraw the left country axis
+  // redraw the country axis
   d3.select("#country-axis").remove();
   var top10Countries = [
     "",
     ...cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
       selectedRole
-    ]["countries"],
-    ""
+    ]["countries"]
   ];
 
   var countryScale = d3
@@ -113,17 +130,17 @@ function updateDisplay() {
     .domain(top10Countries)
     .range(
       d3.range(
-        margin.top,
-        height - margin.bottom,
-        (height - margin.bottom - margin.top) / top10Countries.length
+        margin.left,
+        width - margin.right,
+        (width - margin.right - margin.left) / top10Countries.length
       )
     );
 
   produceSVG
     .append("g")
-    .call(d3.axisLeft(countryScale))
+    .call(d3.axisBottom(countryScale))
     .attr("id", "country-axis")
-    .attr("transform", "translate(" + margin.left + ",0)");
+    .attr("transform", "translate(0, " + (height - margin.bottom) + ")");
 
   // redraw the bars
   d3.select("#produce-bars").remove();
@@ -140,57 +157,81 @@ function updateDisplay() {
 
   barChart
     .append("rect")
-    .attr("x", margin.left)
-    .attr("y", function(d, i) {
-      return countryScale(d) - bar.height;
+    .attr("x", function(d, i) {
+      return countryScale(d) - bar.width - bar.spacing;
     })
-    .attr("width", function(d, i) {
+    .attr("y", function(d, i) {
+      return quantityScale(
+        cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
+          selectedRole
+        ]["production"][i]
+      );
+    })
+    .attr("width", bar.width)
+    .attr("height", function(d, i) {
       return (
+        height -
+        margin.bottom -
         quantityScale(
           cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
             selectedRole
           ]["production"][i]
-        ) - margin.left
+        )
       );
     })
-    .attr("height", bar.height)
-    .attr("fill", "#f77189");
+    .attr("fill", bar.colors.production);
 
   barChart
     .append("rect")
-    .attr("x", margin.left)
-    .attr("y", function(d, i) {
+    .attr("x", function(d, i) {
       return countryScale(d);
     })
-    .attr("width", function(d, i) {
+    .attr("y", function(d, i) {
+      return quantityScale(
+        cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
+          selectedRole
+        ]["import"][i]
+      );
+    })
+    .attr("width", bar.width)
+    .attr("height", function(d, i) {
       return (
+        height -
+        margin.bottom -
         quantityScale(
           cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
             selectedRole
           ]["import"][i]
-        ) - margin.left
+        )
       );
     })
-    .attr("height", bar.height)
-    .attr("fill", "#50b131");
+    .attr("fill", bar.colors.import);
 
   barChart
     .append("rect")
-    .attr("x", margin.left)
-    .attr("y", function(d, i) {
-      return countryScale(d) + bar.height;
+    .attr("x", function(d, i) {
+      return countryScale(d) + bar.width + bar.spacing;
     })
-    .attr("width", function(d, i) {
+    .attr("y", function(d, i) {
+      return quantityScale(
+        cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
+          selectedRole
+        ]["export"][i]
+      );
+    })
+    .attr("width", bar.width)
+    .attr("height", function(d, i) {
       return (
+        height -
+        margin.bottom -
         quantityScale(
           cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
             selectedRole
           ]["export"][i]
-        ) - margin.left
+        )
       );
     })
-    .attr("height", bar.height)
-    .attr("fill", "#3ba3ec");
+    .attr("fill", bar.colors.export);
 
   console.log(
     "Displaying " +
