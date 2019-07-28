@@ -12,7 +12,7 @@ $(document).ready(function() {
 // Visualization constants and variables
 var width = $(".container").width();
 const height = 600;
-const margin = { top: 50, left: 70, bottom: 100, right: 50 };
+const margin = { top: 50, left: 150, bottom: 100, right: 50 };
 
 const bar = {
   height: 10
@@ -20,6 +20,8 @@ const bar = {
 
 var cachedProduceData = null;
 var produceVisualization = null;
+var quantityScale = null;
+var produceSVG = null;
 
 function visualizeProduce() {
   cachedProduceData = JSON.parse(sessionStorage.getItem("cachedProduceData"));
@@ -50,25 +52,12 @@ function visualizeProduce() {
     .attr("height", height)
     .append("g");
 
-  var quantityScale = d3
-    .scaleLinear()
-    .domain([
-      0,
-      hundredMillionCeiling(cachedProduceData["largest_quantity"]) + 1
-    ])
-    .range([margin.left, width - margin.right]);
-
-  produceSVG
-    .append("g")
-    .call(d3.axisBottom(quantityScale))
-    .attr("transform", "translate(0, " + (height - margin.bottom) + ")");
-
   updateYearOptions();
 }
 
 function updateYearOptions() {
-  var selectedProduce = document.getElementById("produce-select").value;
-  var selectedData = cachedProduceData[selectedProduce];
+  var selectedData =
+    cachedProduceData[document.getElementById("produce-select").value];
 
   // clear the old year select
   var yearSelect = document.getElementById("year-select");
@@ -91,7 +80,25 @@ function updateDisplay() {
   var selectedProduce = document.getElementById("produce-select").value;
   var selectedYear = document.getElementById("year-select").value;
 
-  // redraw the bottom country axis
+  // redraw the bottom quantity axis
+  d3.select("#quantity-axis").remove();
+  quantityScale = d3
+    .scaleLinear()
+    .domain([
+      0,
+      cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
+        "Producers"
+      ]["production"][0] + 1
+    ])
+    .range([margin.left, width - margin.right]);
+
+  produceSVG
+    .append("g")
+    .call(d3.axisBottom(quantityScale))
+    .attr("id", "quantity-axis")
+    .attr("transform", "translate(0, " + (height - margin.bottom) + ")");
+
+  // redraw the left country axis
   d3.select("#country-axis").remove();
   var top10Countries = [
     "",
@@ -120,24 +127,70 @@ function updateDisplay() {
 
   // redraw the bars
   d3.select("#produce-bars").remove();
-  var svg = produceSVG.append("g").attr("id", "produce-bars");
-  svg
+  var barChart = produceSVG
+    .append("g")
+    .attr("id", "produce-bars")
     .selectAll("bars")
     .data(
       cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
         selectedRole
-      ]
+      ]["countries"]
     )
-    .enter()
+    .enter();
+
+  barChart
     .append("rect")
-    .attr("x", 0)
+    .attr("x", margin.left)
     .attr("y", function(d, i) {
-      return countryScale(d["countries"][i]);
+      return countryScale(d) - bar.height;
     })
     .attr("width", function(d, i) {
-      return quantityScale(d["production"][i]);
+      return (
+        quantityScale(
+          cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
+            selectedRole
+          ]["production"][i]
+        ) - margin.left
+      );
     })
-    .attr("height", function(d, i) {});
+    .attr("height", bar.height)
+    .attr("fill", "#f77189");
+
+  barChart
+    .append("rect")
+    .attr("x", margin.left)
+    .attr("y", function(d, i) {
+      return countryScale(d);
+    })
+    .attr("width", function(d, i) {
+      return (
+        quantityScale(
+          cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
+            selectedRole
+          ]["import"][i]
+        ) - margin.left
+      );
+    })
+    .attr("height", bar.height)
+    .attr("fill", "#50b131");
+
+  barChart
+    .append("rect")
+    .attr("x", margin.left)
+    .attr("y", function(d, i) {
+      return countryScale(d) + bar.height;
+    })
+    .attr("width", function(d, i) {
+      return (
+        quantityScale(
+          cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
+            selectedRole
+          ]["export"][i]
+        ) - margin.left
+      );
+    })
+    .attr("height", bar.height)
+    .attr("fill", "#3ba3ec");
 
   console.log(
     "Displaying " +
