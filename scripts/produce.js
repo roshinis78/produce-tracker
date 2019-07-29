@@ -3,17 +3,18 @@ $(document).ready(function() {
   if (sessionStorage.getItem("cachedProduceData") == null) {
     d3.json("data/top10_imp_exp_prod.json").then(function(data) {
       sessionStorage.setItem("cachedProduceData", JSON.stringify(data));
-    });
-  }
 
-  visualizeProduce();
+      visualizeProduce();
+    });
+  } else {
+    visualizeProduce();
+  }
 });
 
 // Visualization constants and variables
-var width = $(".row").width();
-console.log(width);
+const width = 1050;
 const height = 600;
-const margin = { top: 90, left: 100, bottom: 40, right: 10 };
+const margin = { top: 80, left: 100, bottom: 40, right: 10 };
 
 const bar = {
   width: 20,
@@ -42,14 +43,14 @@ function visualizeProduce() {
   cachedProduceData["produce"].forEach(function(produce) {
     var option = document.createElement("option");
     option.innerHTML = produce;
-    if (produce == "Maize") {
+    if (produce == "Poppy seed") {
       option.selected = true;
     }
     produceSelect.appendChild(option);
   });
 
   // add an event listener for the produce select
-  produceSelect.addEventListener("change", updateYearOptions);
+  produceSelect.addEventListener("change", switchProduce);
 
   // add display update event listeners for the role and year selects
   document
@@ -71,12 +72,15 @@ function visualizeProduce() {
     .attr("width", width)
     .attr("height", height);
 
-  updateYearOptions();
+  switchProduce();
 }
 
-function updateYearOptions() {
+function switchProduce() {
   var selectedData =
     cachedProduceData[document.getElementById("produce-select").value];
+
+  // default to producer view
+  $("#role-option-producer").attr("selected", "true");
 
   // clear the old year select
   var yearSelect = document.getElementById("year-select");
@@ -101,6 +105,10 @@ function updateDisplay() {
   var selectedRole = document.getElementById("role-select").value;
   var selectedProduce = document.getElementById("produce-select").value;
   var selectedYear = document.getElementById("year-select").value;
+  var selectedData =
+    cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
+      selectedRole
+    ];
 
   // redraw the bottom quantity axis
   d3.select("#quantity-axis").remove();
@@ -147,19 +155,16 @@ function updateDisplay() {
   // redraw the country axis
   d3.select("#country-axis").remove();
   d3.selectAll(".country-label").remove();
-  var top10Countries =
-    cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
-      selectedRole
-    ]["countries"];
 
   var countryScale = d3
     .scaleOrdinal()
-    .domain(top10Countries)
+    .domain(selectedData["countries"])
     .range(
       d3.range(
         margin.left + 20,
         width - margin.right,
-        (width - margin.right - margin.left - 20) / top10Countries.length
+        (width - margin.right - margin.left - 20) /
+          selectedData["countries"].length
       )
     );
 
@@ -175,34 +180,62 @@ function updateDisplay() {
     })
     .attr("y1", margin.top)
     .attr("x2", function(d, i) {
-      // position label with popper
+      // position the country label with popper
       var label = document.createElement("p");
-      new Popper(this, label, {
-        placement: "top"
-      });
       label.className = "country-label";
       label.innerHTML = d;
+      new Popper(this, label, {
+        placement: "top",
+        positionFixed: true,
+        modifiers: {
+          preventOverflow: {
+            enabled: false
+          },
+          hide: {
+            enabled: false
+          }
+        }
+      });
+
+      // add a tooltip to the country label popper
+      label.setAttribute("data-toggle", "tooltip");
+      label.setAttribute("data-html", "true");
+      label.setAttribute("data-placement", "left");
+      $(label).attr("title", function() {
+        const oneMillion = 1000000;
+        var productionQuantity =
+          (selectedData["production"][i] / oneMillion).toFixed(3) + "M";
+        var importQuantity =
+          (selectedData["import"][i] / oneMillion).toFixed(3) + "M";
+        var exportQuantity =
+          (selectedData["export"][i] / oneMillion).toFixed(3) + "M";
+        return (
+          "Production: " +
+          productionQuantity +
+          "<br>" +
+          "Import: " +
+          importQuantity +
+          "<br>" +
+          "Export: " +
+          exportQuantity
+        );
+      });
+
       document.getElementById("produce-poppers").appendChild(label);
-      $(".country-label").css(
-        "max-width",
-        bar.width * 3 + bar.spacing * 2 + 20
-      );
+
+      // return the x2 coordinate of the line
       return countryScale(d) + bar.width + bar.spacing + bar.width;
     })
     .attr("y2", margin.top)
     .attr("stroke", axis.color);
 
-  // redraw the bars
+  // redraw the bars for production, import and export quantities (in that order)
   d3.select("#produce-bars").remove();
   var barChart = produceSVG
     .append("g")
     .attr("id", "produce-bars")
     .selectAll("bars")
-    .data(
-      cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
-        selectedRole
-      ]["countries"]
-    )
+    .data(selectedData["countries"])
     .enter();
 
   barChart
@@ -211,22 +244,12 @@ function updateDisplay() {
       return countryScale(d) - bar.width - bar.spacing;
     })
     .attr("y", function(d, i) {
-      return quantityScale(
-        cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
-          selectedRole
-        ]["production"][i]
-      );
+      return quantityScale(selectedData["production"][i]);
     })
     .attr("width", bar.width)
     .attr("height", function(d, i) {
       return (
-        height -
-        margin.bottom -
-        quantityScale(
-          cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
-            selectedRole
-          ]["production"][i]
-        )
+        height - margin.bottom - quantityScale(selectedData["production"][i])
       );
     })
     .attr("fill", bar.colors.production);
@@ -237,23 +260,11 @@ function updateDisplay() {
       return countryScale(d);
     })
     .attr("y", function(d, i) {
-      return quantityScale(
-        cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
-          selectedRole
-        ]["import"][i]
-      );
+      return quantityScale(selectedData["import"][i]);
     })
     .attr("width", bar.width)
     .attr("height", function(d, i) {
-      return (
-        height -
-        margin.bottom -
-        quantityScale(
-          cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
-            selectedRole
-          ]["import"][i]
-        )
-      );
+      return height - margin.bottom - quantityScale(selectedData["import"][i]);
     })
     .attr("fill", bar.colors.import);
 
@@ -263,25 +274,19 @@ function updateDisplay() {
       return countryScale(d) + bar.width + bar.spacing;
     })
     .attr("y", function(d, i) {
-      return quantityScale(
-        cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
-          selectedRole
-        ]["export"][i]
-      );
+      return quantityScale(selectedData["export"][i]);
     })
     .attr("width", bar.width)
     .attr("height", function(d, i) {
-      return (
-        height -
-        margin.bottom -
-        quantityScale(
-          cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
-            selectedRole
-          ]["export"][i]
-        )
-      );
+      return height - margin.bottom - quantityScale(selectedData["export"][i]);
     })
     .attr("fill", bar.colors.export);
+
+  // set the max-width for all country label poppers
+  $(".country-label").css("max-width", bar.width * 3 + bar.spacing * 2 + 20);
+
+  // enable all tooltips
+  $('[data-toggle="tooltip"]').tooltip();
 
   console.log(
     "Displaying " +
@@ -291,15 +296,4 @@ function updateDisplay() {
       " in " +
       selectedYear
   );
-}
-
-/*****************************************************************************************/
-/* HELPER FUNCTIONS */
-// helper function used in visualizeProduce to calculate the quantity axis range maximum
-function hundredMillionCeiling(number) {
-  const hundredMillion = 100000000;
-  if (number % hundredMillion != 0) {
-    return (Math.floor(number / hundredMillion) + 1) * hundredMillion;
-  }
-  return number;
 }

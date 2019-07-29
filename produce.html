@@ -41,59 +41,40 @@
         <h1 class='viz-title'>Meet the Key Players</h1>
 
         <!-- Visualization user control input -->
-        <div class='row justify-content-center'>
-            <form class='form-inline'>
-                <div class='form-group'>
-                    <label class='pl-2 pr-2' for='role-select'>Top</label>
-                    <select class='form-control d-none d-md-block' id='role-select'>
-                        <option selected>Producers</option>
-                        <option>Importers</option>
-                        <option>Exporters</option>
-                    </select>
-                </div>
-    
-                <div class='btn-group d-flex d-md-none' role='group'
-                    id='role-select-mobile'>
-                    <button class='btn btn-primary pl-3 pr-3' type='button' id='importer-button'>Importers</button>
-                    <button class='btn btn-light pl-3 pr-3' type='button' id='exporter-button'>Exporters</button>
-                    <button class='btn btn-light pl-3 pr-3' type='button' id='producer-button'>Producers</button>
-                </div>
-    
-                <div class='form-group'>
-                    <div class='d-flex'>
-                        <label class='pl-2 pr-2' for='produce-select'>of</label>
-                        <select class='form-control' id='produce-select'>
-                            <!-- Will be filled by js with set of produce -->
-                        </select>
-                    </div>
-                </div>
-    
-                <div class='form-group'>
-                    <div class='d-flex'>
-                        <label class='pl-2 pr-2' for='year-select'>in</label>
-                        <select class='form-control' id='year-select'>
-                            <!-- Will be filled by js with set of years -->
-                        </select>
-                    </div>
-                </div>
+        <div class='d-flex justify-content-center'>
+            <form class='d-flex flex-column flex-md-row justify-content-center align-items-center'>
+                <label for='role-select'>Top</label>
+                <select class='form-control' id='role-select'>
+                    <option id='role-option-producer' selected>Producers</option>
+                    <option>Importers</option>
+                    <option>Exporters</option>
+                </select>                
+
+                <label for='produce-select'>of</label>
+                <select class='form-control' id='produce-select'>
+                    <!-- Will be filled by js with set of produce -->
+                </select>
+
+                <label for='year-select'>in</label>
+                <select class='form-control' id='year-select'>
+                    <!-- Will be filled by js with set of years -->
+                </select>
             </form>
         </div>
 
         <!-- Legend will go here -->
-        <div class='row justify-content-center mt-3' id='produce-legend'>
+        <div class='d-flex justify-content-center align-items-center mt-3' id='produce-legend'>
+            <p class='pr-4'>
+                <i class='fa fa-square pr-1 production-color'></i>
+                <span class='d-none d-md-inline'>Units</span> Produced
+            </p>
+            <p class='pr-4'>
+                <i class='fa fa-square pr-1 import-color'></i>
+                <span class='d-none d-md-inline'>Units</span> Imported
+            </p>
             <p>
-                <span class='pr-3'>
-                    <i class='fa fa-square pr-1 production-color'></i>
-                    Units Produced
-                </span>
-                <span class='pr-3'>
-                    <i class='fa fa-square pr-1 import-color'></i>
-                    Units Imported
-                </span>
-                <span>
-                    <i class='fa fa-square pr-1 export-color'></i>
-                    Units Exported
-                </span>
+                <i class='fa fa-square pr-1 export-color'></i>
+                <span class='d-none d-md-inline'>Units</span> Exported
             </p>
         </div>
 

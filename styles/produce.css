@@ -6,3 +6,22 @@
   overflow-wrap: break-word;
   text-align: center;
 }
+
+label {
+  padding: 0.5rem 0.6rem 0rem;
+}
+
+@keyframes rise {
+  from {
+    height: 0%;
+  }
+  to {
+    height: 100%;
+  }
+}
+
+#produce-chart {
+  overflow-x: scroll;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
