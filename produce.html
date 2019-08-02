@@ -41,8 +41,8 @@
         <h1 class='viz-title'>Meet the Key Players</h1>
 
         <!-- Visualization user control input -->
-        <div class='d-flex justify-content-center'>
-            <form class='d-flex flex-column flex-md-row justify-content-center align-items-center'>
+        <div class='d-flex flex-column flex-md-row justify-content-center mb-3'>
+            <form>
                 <label for='role-select'>Top</label>
                 <select class='form-control' id='role-select'>
                     <option id='role-option-producer' selected>Producers</option>
@@ -59,6 +59,15 @@
                 <select class='form-control' id='year-select'>
                     <!-- Will be filled by js with set of years -->
                 </select>
+
+            </form>
+
+            <form class='bg-dark rounded text-white mt-2 mt-md-0 ml-md-2 p-1'>
+                <button class='btn btn-dark' type='button' data-toggle='collapse' data-target='#animation-control' id='animate-toggle'>Animate!</button>
+                <div class='input-group collapse' id='animation-control'>
+                    <input class='form-control' id='animation-speed' type='number' placeholder='speed' min='1' max='20' required>
+                    <button class='btn btn-dark' id='play-button' type='button'><i class='fa fa-inverse fa-play'></i></button>
+                </div>
             </form>
         </div>
 

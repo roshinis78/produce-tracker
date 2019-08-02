@@ -60,6 +60,22 @@ function visualizeProduce() {
     .getElementById("year-select")
     .addEventListener("change", updateDisplay);
 
+  // add an event listener for the year play button
+  document.getElementById("play-button").addEventListener("click", playYears);
+
+  // add an event listener for the animation speed input
+  $("#animation-speed").on("keypress", function(event) {
+    if (event.key == "Enter") {
+      event.preventDefault();
+      playYears();
+    }
+  });
+
+  // add an event listener to the animation input label
+  $("#animation-label").on("click", function() {
+    $("#animation-control").attr("class", "form-control");
+  });
+
   // fill in the legend colors
   $(".production-color").css("color", bar.colors.production);
   $(".import-color").css("color", bar.colors.import);
@@ -92,16 +108,81 @@ function switchProduce() {
   selectedData["available_years"].forEach(function(year) {
     var option = document.createElement("option");
     option.innerHTML = year;
-    if (year == 2016) {
-      option.selected = true;
-    }
     yearSelect.appendChild(option);
   });
+
+  // select the most recent available year by default
+  $("#year-select option:last").attr("selected", true);
 
   updateDisplay();
 }
 
-function updateDisplay() {
+var playYearsInterval = null;
+function playYears() {
+  // play the animation
+  if (playYearsInterval == null) {
+    // animation speed is validated on the client side
+    if (!document.getElementById("animation-speed").checkValidity()) {
+      return;
+    }
+    var animationSpeed = $("#animation-speed").val() * 1000;
+
+    // switch play button to stop button
+    $("#play-button").html("<i class='fa fa-inverse fa-square'></i>");
+
+    // display the first available year, then every available year after that
+    $("#year-select option:selected").removeAttr("selected");
+    $("#year-select option:first").attr("selected", true);
+    updateDisplay(
+      (updateQuantityScale = true),
+      (fitScaleForAllYears = true),
+      (addTooltips = false)
+    );
+
+    // hide tooltips
+    $(".tooltip").hide();
+
+    playYearsInterval = setInterval(playNextYear, animationSpeed);
+  }
+  // stop the animation
+  else {
+    $("#play-button").html("<i class='fa fa-inverse fa-play'></i>");
+    clearInterval(playYearsInterval);
+    updateDisplay(
+      (updateQuantityScale = false),
+      (fitScaleForAllYears = false),
+      (addTooltips = true)
+    );
+    playYearsInterval = null;
+  }
+}
+
+function playNextYear() {
+  // if there are no more available years, re-enable the play button and exit
+  if ($("#year-select option:selected").next().length == 0) {
+    $("#play-button").html("<i class='fa fa-inverse fa-play'></i>");
+    clearInterval(playYearsInterval);
+    playYearsInterval = null;
+  }
+
+  // display the next available year
+  else {
+    var previouslySelected = $("#year-select option:selected");
+    previouslySelected.next().attr("selected", true);
+    previouslySelected.removeAttr("selected");
+    updateDisplay(
+      (updateQuantityScale = false),
+      (fitScaleForAllYears = false),
+      (addTooltips = false)
+    );
+  }
+}
+
+function updateDisplay(
+  updateQuantityScale = true,
+  fitScaleForAllYears = false,
+  addTooltips = true
+) {
   var selectedRole = document.getElementById("role-select").value;
   var selectedProduce = document.getElementById("produce-select").value;
   var selectedYear = document.getElementById("year-select").value;
@@ -110,47 +191,54 @@ function updateDisplay() {
       selectedRole
     ];
 
-  // redraw the bottom quantity axis
-  d3.select("#quantity-axis").remove();
-  quantityScale = d3
-    .scaleLinear()
-    .domain([
-      0,
+  // redraw the quantity axis
+  if (updateQuantityScale) {
+    d3.select("#quantity-axis").remove();
+
+    // fit the scale to either the current year, or to all available years for the given produce
+    var domainMax =
       cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
-        "Producers"
-      ]["production"][0] + 1
-    ])
-    .range([height - margin.bottom, margin.top]);
+        "largest_quantity"
+      ];
+    if (fitScaleForAllYears) {
+      domainMax = cachedProduceData[selectedProduce]["largest_quantity"];
+    }
 
-  var quantityAxis = produceSVG
-    .append("g")
-    .attr("id", "quantity-axis")
-    .selectAll("quantity-axis-elements")
-    .data(quantityScale.ticks())
-    .enter();
+    quantityScale = d3
+      .scaleLinear()
+      .domain([0, domainMax])
+      .range([height - margin.bottom, margin.top]);
 
-  quantityAxis
-    .append("line")
-    .attr("x1", 0)
-    .attr("y1", function(d, i) {
-      return quantityScale(d);
-    })
-    .attr("x2", width)
-    .attr("y2", function(d, i) {
-      return quantityScale(d);
-    })
-    .attr("stroke", axis.color);
+    var quantityAxis = produceSVG
+      .append("g")
+      .attr("id", "quantity-axis")
+      .selectAll("quantity-axis-elements")
+      .data(quantityScale.ticks())
+      .enter();
 
-  quantityAxis
-    .append("text")
-    .text(function(d, i) {
-      const oneMillion = 1000000;
-      return d / oneMillion + "M";
-    })
-    .attr("x", 0)
-    .attr("y", function(d, i) {
-      return quantityScale(d) - 10;
-    });
+    quantityAxis
+      .append("line")
+      .attr("x1", 0)
+      .attr("y1", function(d, i) {
+        return quantityScale(d);
+      })
+      .attr("x2", width)
+      .attr("y2", function(d, i) {
+        return quantityScale(d);
+      })
+      .attr("stroke", axis.color);
+
+    quantityAxis
+      .append("text")
+      .text(function(d, i) {
+        const oneMillion = 1000000;
+        return d / oneMillion + "M";
+      })
+      .attr("x", 0)
+      .attr("y", function(d, i) {
+        return quantityScale(d) - 10;
+      });
+  }
 
   // redraw the country axis
   d3.select("#country-axis").remove();
@@ -186,8 +274,10 @@ function updateDisplay() {
       label.innerHTML = d;
       new Popper(this, label, {
         placement: "top",
-        positionFixed: true,
         modifiers: {
+          flip: {
+            enabled: false
+          },
           preventOverflow: {
             enabled: false
           },
@@ -198,28 +288,30 @@ function updateDisplay() {
       });
 
       // add a tooltip to the country label popper
-      label.setAttribute("data-toggle", "tooltip");
-      label.setAttribute("data-html", "true");
-      label.setAttribute("data-placement", "left");
-      $(label).attr("title", function() {
-        const oneMillion = 1000000;
-        var productionQuantity =
-          (selectedData["production"][i] / oneMillion).toFixed(3) + "M";
-        var importQuantity =
-          (selectedData["import"][i] / oneMillion).toFixed(3) + "M";
-        var exportQuantity =
-          (selectedData["export"][i] / oneMillion).toFixed(3) + "M";
-        return (
-          "Production: " +
-          productionQuantity +
-          "<br>" +
-          "Import: " +
-          importQuantity +
-          "<br>" +
-          "Export: " +
-          exportQuantity
-        );
-      });
+      if (addTooltips) {
+        label.setAttribute("data-toggle", "tooltip");
+        label.setAttribute("data-html", "true");
+        label.setAttribute("data-placement", "top");
+        $(label).attr("title", function() {
+          const oneMillion = 1000000;
+          var productionQuantity =
+            (selectedData["production"][i] / oneMillion).toFixed(3) + "M";
+          var importQuantity =
+            (selectedData["import"][i] / oneMillion).toFixed(3) + "M";
+          var exportQuantity =
+            (selectedData["export"][i] / oneMillion).toFixed(3) + "M";
+          return (
+            "Production: " +
+            productionQuantity +
+            "<br>" +
+            "Import: " +
+            importQuantity +
+            "<br>" +
+            "Export: " +
+            exportQuantity
+          );
+        });
+      }
 
       document.getElementById("produce-poppers").appendChild(label);
 
