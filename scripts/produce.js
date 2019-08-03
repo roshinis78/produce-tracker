@@ -1,8 +1,8 @@
 $(document).ready(function() {
   // if the data has not been fetched, fetch and cache it
-  if (sessionStorage.getItem("cachedProduceData") == null) {
-    d3.json("data/top10_imp_exp_prod.json").then(function(data) {
-      sessionStorage.setItem("cachedProduceData", JSON.stringify(data));
+  if (sessionStorage.getItem("cachedData") == null) {
+    d3.json("data/top10_countries.json").then(function(data) {
+      sessionStorage.setItem("cachedData", JSON.stringify(data));
 
       visualizeProduce();
     });
@@ -30,51 +30,43 @@ const axis = {
   color: "#ced4da"
 };
 
-var cachedProduceData = null;
-var produceVisualization = null;
+const defaults = {
+  produce: "Poppy seed"
+};
+
+var cachedData = null;
 var quantityScale = null;
+var countryScale = null;
 var produceSVG = null;
 
 function visualizeProduce() {
-  cachedProduceData = JSON.parse(sessionStorage.getItem("cachedProduceData"));
+  cachedData = JSON.parse(sessionStorage.getItem("cachedData"));
 
   // fill the produce select with produce
   var produceSelect = document.getElementById("produce-select");
-  cachedProduceData["produce"].forEach(function(produce) {
+  cachedData["produce"].forEach(function(produce) {
     var option = document.createElement("option");
     option.innerHTML = produce;
-    if (produce == "Poppy seed") {
+    if (produce == defaults.produce) {
       option.selected = true;
     }
     produceSelect.appendChild(option);
   });
 
-  // add an event listener for the produce select
+  // VIZ USER INPUT SELECT EVENT LISTENERS
   produceSelect.addEventListener("change", switchProduce);
+  $("#role-select").on("change", updateDisplay);
+  $("#year-select").on("change", updateDisplay);
 
-  // add display update event listeners for the role and year selects
-  document
-    .getElementById("role-select")
-    .addEventListener("change", updateDisplay);
-  document
-    .getElementById("year-select")
-    .addEventListener("change", updateDisplay);
-
-  // add an event listener for the year play button
-  document.getElementById("play-button").addEventListener("click", playYears);
-
-  // add an event listener for the animation speed input
+  // ANIMATION CONTROL EVENT LISTENERS
+  // animation can be started by EITHER pressing enter in the speed input OR pressing the play button
   $("#animation-speed").on("keypress", function(event) {
     if (event.key == "Enter") {
-      event.preventDefault();
+      event.preventDefault(); // prevent submit
       playYears();
     }
   });
-
-  // add an event listener to the animation input label
-  $("#animation-label").on("click", function() {
-    $("#animation-control").attr("class", "form-control");
-  });
+  document.getElementById("play-button").addEventListener("click", playYears);
 
   // fill in the legend colors
   $(".production-color").css("color", bar.colors.production);
@@ -88,35 +80,276 @@ function visualizeProduce() {
     .attr("width", width)
     .attr("height", height);
 
+  // set default values for select inputs + call updateDisplay
   switchProduce();
 }
 
 function switchProduce() {
-  var selectedData =
-    cachedProduceData[document.getElementById("produce-select").value];
+  var data = cachedData[$("#produce-select").val()];
 
-  // default to producer view
-  $("#role-option-producer").attr("selected", "true");
+  // update the year select options
+  var selection = d3
+    .select("#year-select")
+    .selectAll("option")
+    .data(data["available_years"]);
+  console.log(selection);
 
-  // clear the old year select
-  var yearSelect = document.getElementById("year-select");
-  while (yearSelect.firstChild) {
-    yearSelect.removeChild(yearSelect.firstChild);
-  }
-
-  // fill the year select with years
-  selectedData["available_years"].forEach(function(year) {
-    var option = document.createElement("option");
-    option.innerHTML = year;
-    yearSelect.appendChild(option);
+  // update existing options
+  selection.html(function(year, i) {
+    return year;
   });
+  // remove extra options
+  selection.exit().remove();
+  // add surplus options
+  selection
+    .enter()
+    .append("option")
+    .html(function(year, i) {
+      console.log(year);
+      return year;
+    });
 
-  // select the most recent available year by default
+  // defaults: producer view and most recent year
+  $("#role-option-producer").attr("selected", "true");
   $("#year-select option:last").attr("selected", true);
 
   updateDisplay();
 }
 
+function updateDisplay(
+  updateQuantityScale = true,
+  fitScaleForAllYears = false,
+  addTooltips = true
+) {
+  // redraw the quantity axis
+  if (updateQuantityScale) {
+    d3.select("#quantity-axis").remove();
+
+    // fit the scale to either the current year, or to all available years for the given produce
+    var domainMax =
+      cachedData[selectedProduce][selectedYear]["largest_quantity"];
+    if (fitScaleForAllYears) {
+      domainMax = cachedData[selectedProduce]["largest_quantity"];
+    }
+
+    quantityScale = d3
+      .scaleLinear()
+      .domain([0, domainMax])
+      .range([height - margin.bottom, margin.top]);
+
+    var quantityAxis = produceSVG
+      .append("g")
+      .attr("id", "quantity-axis")
+      .selectAll("quantity-axis-elements")
+      .data(quantityScale.ticks())
+      .enter();
+
+    quantityAxis
+      .append("line")
+      .attr("x1", 0)
+      .attr("y1", function(d, i) {
+        return quantityScale(d);
+      })
+      .attr("x2", width)
+      .attr("y2", function(d, i) {
+        return quantityScale(d);
+      })
+      .attr("stroke", axis.color);
+
+    quantityAxis
+      .append("text")
+      .text(function(d, i) {
+        const oneMillion = 1000000;
+        return d / oneMillion + "M";
+      })
+      .attr("x", 0)
+      .attr("y", function(d, i) {
+        return quantityScale(d) - 10;
+      });
+  }
+
+  refreshCountryAxis(addTooltips);
+  // update the bars for production, import and export quantities (in that order)
+  refreshBars();
+
+  // set the max-width for all country label poppers
+  $(".country-label").css("max-width", bar.width * 3 + bar.spacing * 2 + 20);
+
+  // enable all tooltips
+  $('[data-toggle="tooltip"]').tooltip();
+
+  console.log(
+    "Displaying " +
+      selectedRole +
+      " of " +
+      selectedProduce +
+      " in " +
+      selectedYear
+  );
+}
+
+var topCountries = null;
+function refreshCountryAxis(addTooltips) {
+  var selectedRole = $("#role-select").val();
+  var selectedProduce = $("#produce-select").val();
+  var selectedYear = $("#year-select").val();
+  topCountries = cachedData[selectedProduce][selectedYear][selectedRole];
+
+  // update the axis scale
+  countryScale = d3
+    .scaleOrdinal()
+    .domain(topCountries)
+    .range(
+      d3.range(
+        margin.left + 20,
+        width - margin.right,
+        (width - margin.right - margin.left - 20) / topCountries.length
+      )
+    );
+
+  // clear all poppers
+  $("#produce-poppers p").remove();
+
+  var selection = produceSVG
+    .select("#country-axis")
+    .selectAll("line")
+    .data(topCountries);
+
+  // update existing axis elements
+  selection
+    .transition()
+    .attr("x1", function(d, i) {
+      return countryScale(d) - bar.width - bar.spacing;
+    })
+    .transition()
+    .attr("x2", function(d, i) {
+      // position the country label with popper
+      var label = document.createElement("p");
+      label.className = "country-label";
+      label.innerHTML = d;
+      new Popper(this, label, {
+        placement: "top",
+        modifiers: {
+          flip: {
+            enabled: false
+          },
+          preventOverflow: {
+            enabled: false
+          },
+          hide: {
+            enabled: false
+          }
+        }
+      });
+
+      document.getElementById("produce-poppers").appendChild(label);
+
+      return countryScale(d) + bar.width + bar.spacing + bar.width;
+    });
+
+  // remove superflous axis elements
+  selection.exit().remove();
+
+  // append surplus axis elements
+  eelection
+    .enter()
+    .append("line")
+    .attr("x1", function(d, i) {
+      return countryScale(d) - bar.width - bar.spacing;
+    })
+    .attr("y1", margin.top)
+    .attr("x2", function(d, i) {
+      // position the country label with popper
+      var label = document.createElement("p");
+      label.className = "country-label";
+      label.innerHTML = d;
+      new Popper(this, label, {
+        placement: "top",
+        modifiers: {
+          flip: {
+            enabled: false
+          },
+          preventOverflow: {
+            enabled: false
+          },
+          hide: {
+            enabled: false
+          }
+        }
+      });
+
+      document.getElementById("produce-poppers").appendChild(label);
+
+      // return the x2 coordinate of the line
+      return countryScale(d) + bar.width + bar.spacing + bar.width;
+    })
+    .attr("y2", margin.top)
+    .attr("stroke", axis.color);
+}
+
+function refreshBars() {
+  ["production", "import", "export"].forEach(function(role) {
+    console.log(role);
+    var selection = produceSVG
+      .selectAll("." + role + "-bar")
+      .data(selectedData["countries"].sort());
+
+    if (selection.exit().size() > 0) {
+      console.log("HELLO!");
+    }
+    // update bars for countries that are already in the top 10
+    selection
+      .transition()
+      .attr("x", function(d, i) {
+        return {
+          production: countryScale(d) - bar.width - bar.spacing,
+          import: countryScale(d),
+          export: countryScale(d) + bar.width + bar.spacing
+        }[role];
+      })
+      .transition()
+      .attr("y", function(d, i) {
+        return quantityScale(selectedData[role][i]);
+      })
+      .attr("height", function(d, i) {
+        return height - margin.bottom - quantityScale(selectedData[role][i]);
+      });
+
+    // remove bars for countries that fall out of the top 10
+    selection
+      .exit()
+      .transition()
+      .attr("height", 0)
+      .remove();
+
+    // add bars for countries that just entered the top 10
+    selection
+      .enter()
+      .append("rect")
+      .attr("x", function(d, i) {
+        return {
+          production: countryScale(d) - bar.width - bar.spacing,
+          import: countryScale(d),
+          export: countryScale(d) + bar.width + bar.spacing
+        }[role];
+      })
+      .attr("y", height)
+      .transition()
+      .attr("y", function(d, i) {
+        return quantityScale(selectedData[role][i]);
+      })
+      .attr("width", bar.width)
+      .attr("height", 0)
+      .transition()
+      .attr("height", function(d, i) {
+        return height - margin.bottom - quantityScale(selectedData[role][i]);
+      })
+      .attr("fill", bar.colors[role])
+      .attr("class", role + "-bar");
+  });
+}
+
+// ANIMATION RELATED FUNCTIONS
 var playYearsInterval = null;
 function playYears() {
   // play the animation
@@ -176,216 +409,4 @@ function playNextYear() {
       (addTooltips = false)
     );
   }
-}
-
-function updateDisplay(
-  updateQuantityScale = true,
-  fitScaleForAllYears = false,
-  addTooltips = true
-) {
-  var selectedRole = document.getElementById("role-select").value;
-  var selectedProduce = document.getElementById("produce-select").value;
-  var selectedYear = document.getElementById("year-select").value;
-  var selectedData =
-    cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
-      selectedRole
-    ];
-
-  // redraw the quantity axis
-  if (updateQuantityScale) {
-    d3.select("#quantity-axis").remove();
-
-    // fit the scale to either the current year, or to all available years for the given produce
-    var domainMax =
-      cachedProduceData[selectedProduce]["top10_per_year"][selectedYear][
-        "largest_quantity"
-      ];
-    if (fitScaleForAllYears) {
-      domainMax = cachedProduceData[selectedProduce]["largest_quantity"];
-    }
-
-    quantityScale = d3
-      .scaleLinear()
-      .domain([0, domainMax])
-      .range([height - margin.bottom, margin.top]);
-
-    var quantityAxis = produceSVG
-      .append("g")
-      .attr("id", "quantity-axis")
-      .selectAll("quantity-axis-elements")
-      .data(quantityScale.ticks())
-      .enter();
-
-    quantityAxis
-      .append("line")
-      .attr("x1", 0)
-      .attr("y1", function(d, i) {
-        return quantityScale(d);
-      })
-      .attr("x2", width)
-      .attr("y2", function(d, i) {
-        return quantityScale(d);
-      })
-      .attr("stroke", axis.color);
-
-    quantityAxis
-      .append("text")
-      .text(function(d, i) {
-        const oneMillion = 1000000;
-        return d / oneMillion + "M";
-      })
-      .attr("x", 0)
-      .attr("y", function(d, i) {
-        return quantityScale(d) - 10;
-      });
-  }
-
-  // redraw the country axis
-  d3.select("#country-axis").remove();
-  d3.selectAll(".country-label").remove();
-
-  var countryScale = d3
-    .scaleOrdinal()
-    .domain(selectedData["countries"])
-    .range(
-      d3.range(
-        margin.left + 20,
-        width - margin.right,
-        (width - margin.right - margin.left - 20) /
-          selectedData["countries"].length
-      )
-    );
-
-  var countryAxis = produceSVG
-    .append("g")
-    .attr("id", "country-axis")
-    .selectAll("country-axis-elements")
-    .data(countryScale.domain())
-    .enter()
-    .append("line")
-    .attr("x1", function(d, i) {
-      return countryScale(d) - bar.width - bar.spacing;
-    })
-    .attr("y1", margin.top)
-    .attr("x2", function(d, i) {
-      // position the country label with popper
-      var label = document.createElement("p");
-      label.className = "country-label";
-      label.innerHTML = d;
-      new Popper(this, label, {
-        placement: "top",
-        modifiers: {
-          flip: {
-            enabled: false
-          },
-          preventOverflow: {
-            enabled: false
-          },
-          hide: {
-            enabled: false
-          }
-        }
-      });
-
-      // add a tooltip to the country label popper
-      if (addTooltips) {
-        label.setAttribute("data-toggle", "tooltip");
-        label.setAttribute("data-html", "true");
-        label.setAttribute("data-placement", "top");
-        $(label).attr("title", function() {
-          const oneMillion = 1000000;
-          var productionQuantity =
-            (selectedData["production"][i] / oneMillion).toFixed(3) + "M";
-          var importQuantity =
-            (selectedData["import"][i] / oneMillion).toFixed(3) + "M";
-          var exportQuantity =
-            (selectedData["export"][i] / oneMillion).toFixed(3) + "M";
-          return (
-            "Production: " +
-            productionQuantity +
-            "<br>" +
-            "Import: " +
-            importQuantity +
-            "<br>" +
-            "Export: " +
-            exportQuantity
-          );
-        });
-      }
-
-      document.getElementById("produce-poppers").appendChild(label);
-
-      // return the x2 coordinate of the line
-      return countryScale(d) + bar.width + bar.spacing + bar.width;
-    })
-    .attr("y2", margin.top)
-    .attr("stroke", axis.color);
-
-  // redraw the bars for production, import and export quantities (in that order)
-  d3.select("#produce-bars").remove();
-  var barChart = produceSVG
-    .append("g")
-    .attr("id", "produce-bars")
-    .selectAll("bars")
-    .data(selectedData["countries"])
-    .enter();
-
-  barChart
-    .append("rect")
-    .attr("x", function(d, i) {
-      return countryScale(d) - bar.width - bar.spacing;
-    })
-    .attr("y", function(d, i) {
-      return quantityScale(selectedData["production"][i]);
-    })
-    .attr("width", bar.width)
-    .attr("height", function(d, i) {
-      return (
-        height - margin.bottom - quantityScale(selectedData["production"][i])
-      );
-    })
-    .attr("fill", bar.colors.production);
-
-  barChart
-    .append("rect")
-    .attr("x", function(d, i) {
-      return countryScale(d);
-    })
-    .attr("y", function(d, i) {
-      return quantityScale(selectedData["import"][i]);
-    })
-    .attr("width", bar.width)
-    .attr("height", function(d, i) {
-      return height - margin.bottom - quantityScale(selectedData["import"][i]);
-    })
-    .attr("fill", bar.colors.import);
-
-  barChart
-    .append("rect")
-    .attr("x", function(d, i) {
-      return countryScale(d) + bar.width + bar.spacing;
-    })
-    .attr("y", function(d, i) {
-      return quantityScale(selectedData["export"][i]);
-    })
-    .attr("width", bar.width)
-    .attr("height", function(d, i) {
-      return height - margin.bottom - quantityScale(selectedData["export"][i]);
-    })
-    .attr("fill", bar.colors.export);
-
-  // set the max-width for all country label poppers
-  $(".country-label").css("max-width", bar.width * 3 + bar.spacing * 2 + 20);
-
-  // enable all tooltips
-  $('[data-toggle="tooltip"]').tooltip();
-
-  console.log(
-    "Displaying " +
-      selectedRole +
-      " of " +
-      selectedProduce +
-      " in " +
-      selectedYear
-  );
 }
