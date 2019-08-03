@@ -28,7 +28,8 @@ const bar = {
 
 const axis = {
   color: "#ced4da",
-  labelOffset: 10
+  labelOffset: 10, // vertical offset of label from axis line
+  widthBuffer: 20 // accounts for stuff like Netherlands being wordwrapped as Netherland <break> s
 };
 
 const defaults = {
@@ -125,26 +126,22 @@ function switchProduce() {
 }
 
 function updateDisplay(
-  updateQuantityScale = true,
-  fitScaleForAllYears = false,
-  addTooltips = true
+  updateQuantityScale = true, // by default update the quantity scale and axis
+  fitScaleForAllYears = false, // by default, fit the quantity scale for the current year
+  addTooltips = true // by default add tooltips
 ) {
-  // redraw the quantity axis
+  // refresh the chart
   if (updateQuantityScale) {
     refreshQuantityAxis(fitScaleForAllYears);
   }
-
   refreshCountryAxis(addTooltips);
-  // update the bars for production, import and export quantities (in that order)
-  //refreshBars();
-
-  // set the max-width for all country label poppers
-  $(".country-label").css("max-width", bar.width * 3 + bar.spacing * 2 + 20);
+  refreshBars();
 
   // enable all tooltips
   $('[data-toggle="tooltip"]').tooltip();
 }
 
+// CHART REFRESH FUNCTIONS - UPDATE THE DOM
 function refreshQuantityAxis(fitScaleForAllYears) {
   var selectedProduce = $("#produce-select").val();
   var selectedYear = $("#year-select").val();
@@ -167,6 +164,7 @@ function refreshQuantityAxis(fitScaleForAllYears) {
     .data(quantityScale.ticks());
 
   updateSelection
+    .transition()
     .attr("y1", function(d, i) {
       return quantityScale(d);
     })
@@ -219,22 +217,23 @@ function refreshQuantityAxis(fitScaleForAllYears) {
     });
 }
 
-var topCountries = null;
+var selectedData = null;
 function refreshCountryAxis(addTooltips) {
   var selectedRole = $("#role-select").val();
   var selectedProduce = $("#produce-select").val();
   var selectedYear = $("#year-select").val();
-  topCountries = cachedData[selectedProduce][selectedYear][selectedRole];
+  selectedData = cachedData[selectedProduce][selectedYear][selectedRole];
 
   // update the axis scale
   countryScale = d3
     .scaleOrdinal()
-    .domain(topCountries)
+    .domain(selectedData["countries"])
     .range(
       d3.range(
         margin.left + 20,
         width - margin.right,
-        (width - margin.right - margin.left - 20) / topCountries.length
+        (width - margin.right - margin.left - 20) /
+          selectedData["countries"].length
       )
     );
 
@@ -242,7 +241,7 @@ function refreshCountryAxis(addTooltips) {
   var updateSelection = produceSVG
     .select("#country-axis")
     .selectAll("line")
-    .data(topCountries);
+    .data(selectedData["countries"]);
 
   updateSelection
     .attr("x1", function(d, i) {
@@ -271,21 +270,20 @@ function refreshCountryAxis(addTooltips) {
   updateSelection = d3
     .select("#country-axis-labels")
     .selectAll(".country-axis-label")
-    .data(topCountries);
+    .data(selectedData["countries"]);
 
   updateSelection
     .html(function(country, i) {
       return country;
     })
-
     .style("left", function(d, i) {
-      return countryScale(d) + "px";
+      return countryScale(d) - axis.widthBuffer / 2 + "px";
     });
 
   updateSelection
     .exit()
     .transition()
-    .style("left", width + "px")
+    .style("bottom", height + "px")
     .remove();
 
   updateSelection
@@ -296,28 +294,25 @@ function refreshCountryAxis(addTooltips) {
       return country;
     })
     .style("position", "absolute")
-    // we set offset from bottom instead of top to account for word wrap height changes
-    .style("bottom", height - margin.top + axis.labelOffset + "px")
-    .style("left", "0px")
-    .transition()
     .style("left", function(d, i) {
-      return countryScale(d) + "px";
+      return countryScale(d) - axis.widthBuffer / 2 + "px";
     })
     .style("width", function(d, i) {
-      return 3 * bar.width + 2 * bar.spacing + 10 + "px";
-    });
+      return 3 * bar.width + 2 * bar.spacing + axis.widthBuffer + "px";
+    })
+    // we set offset from bottom instead of top to account for word wrap height changes
+    .style("bottom", height + "px")
+    .transition()
+    .style("bottom", height - margin.top + axis.labelOffset + "px");
 }
 
 function refreshBars() {
   ["production", "import", "export"].forEach(function(role) {
-    console.log(role);
-    var selection = produceSVG
+    var updateSelection = produceSVG
       .selectAll("." + role + "-bar")
-      .data(selectedData["countries"].sort());
+      .data(selectedData["countries"]);
 
-    // update bars for countries that are already in the top 10
-    selection
-      .transition()
+    updateSelection
       .attr("x", function(d, i) {
         return {
           production: countryScale(d) - bar.width - bar.spacing,
@@ -334,14 +329,14 @@ function refreshBars() {
       });
 
     // remove bars for countries that fall out of the top 10
-    selection
+    updateSelection
       .exit()
       .transition()
       .attr("height", 0)
       .remove();
 
     // add bars for countries that just entered the top 10
-    selection
+    updateSelection
       .enter()
       .append("rect")
       .attr("x", function(d, i) {
