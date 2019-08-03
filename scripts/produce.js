@@ -27,7 +27,8 @@ const bar = {
 };
 
 const axis = {
-  color: "#ced4da"
+  color: "#ced4da",
+  labelOffset: 10
 };
 
 const defaults = {
@@ -80,6 +81,13 @@ function visualizeProduce() {
     .attr("width", width)
     .attr("height", height);
 
+  // add groups for the axes
+  produceSVG.append("g").attr("id", "quantity-axis");
+  produceSVG.append("g").attr("id", "country-axis");
+  d3.select("#produce-chart")
+    .append("div")
+    .attr("id", "country-axis-labels");
+
   // set default values for select inputs + call updateDisplay
   switchProduce();
 }
@@ -123,69 +131,92 @@ function updateDisplay(
 ) {
   // redraw the quantity axis
   if (updateQuantityScale) {
-    d3.select("#quantity-axis").remove();
-
-    // fit the scale to either the current year, or to all available years for the given produce
-    var domainMax =
-      cachedData[selectedProduce][selectedYear]["largest_quantity"];
-    if (fitScaleForAllYears) {
-      domainMax = cachedData[selectedProduce]["largest_quantity"];
-    }
-
-    quantityScale = d3
-      .scaleLinear()
-      .domain([0, domainMax])
-      .range([height - margin.bottom, margin.top]);
-
-    var quantityAxis = produceSVG
-      .append("g")
-      .attr("id", "quantity-axis")
-      .selectAll("quantity-axis-elements")
-      .data(quantityScale.ticks())
-      .enter();
-
-    quantityAxis
-      .append("line")
-      .attr("x1", 0)
-      .attr("y1", function(d, i) {
-        return quantityScale(d);
-      })
-      .attr("x2", width)
-      .attr("y2", function(d, i) {
-        return quantityScale(d);
-      })
-      .attr("stroke", axis.color);
-
-    quantityAxis
-      .append("text")
-      .text(function(d, i) {
-        const oneMillion = 1000000;
-        return d / oneMillion + "M";
-      })
-      .attr("x", 0)
-      .attr("y", function(d, i) {
-        return quantityScale(d) - 10;
-      });
+    refreshQuantityAxis(fitScaleForAllYears);
   }
 
   refreshCountryAxis(addTooltips);
   // update the bars for production, import and export quantities (in that order)
-  refreshBars();
+  //refreshBars();
 
   // set the max-width for all country label poppers
   $(".country-label").css("max-width", bar.width * 3 + bar.spacing * 2 + 20);
 
   // enable all tooltips
   $('[data-toggle="tooltip"]').tooltip();
+}
 
-  console.log(
-    "Displaying " +
-      selectedRole +
-      " of " +
-      selectedProduce +
-      " in " +
-      selectedYear
-  );
+function refreshQuantityAxis(fitScaleForAllYears) {
+  var selectedProduce = $("#produce-select").val();
+  var selectedYear = $("#year-select").val();
+
+  // fit the scale to either the current year, or to all available years for the given produce
+  var domainMax = cachedData[selectedProduce][selectedYear]["largest_quantity"];
+  if (fitScaleForAllYears) {
+    domainMax = cachedData[selectedProduce]["largest_quantity"];
+  }
+
+  quantityScale = d3
+    .scaleLinear()
+    .domain([0, domainMax])
+    .range([height - margin.bottom, margin.top]);
+
+  // update axis lines
+  var updateSelection = d3
+    .select("#quantity-axis")
+    .selectAll("line")
+    .data(quantityScale.ticks());
+
+  updateSelection
+    .attr("y1", function(d, i) {
+      return quantityScale(d);
+    })
+    .attr("y2", function(d, i) {
+      return quantityScale(d);
+    });
+
+  updateSelection.exit().remove();
+
+  updateSelection
+    .enter()
+    .append("line")
+    .attr("x1", 0)
+    .attr("y1", function(d, i) {
+      return quantityScale(d);
+    })
+    .attr("x2", width)
+    .attr("y2", function(d, i) {
+      return quantityScale(d);
+    })
+    .attr("stroke", axis.color);
+
+  // update axis labels
+  updateSelection = d3
+    .select("#quantity-axis")
+    .selectAll("text")
+    .data(quantityScale.ticks());
+
+  updateSelection
+    .text(function(d, i) {
+      const oneMillion = 1000000;
+      return d / oneMillion + "M";
+    })
+    .attr("y", function(d, i) {
+      return quantityScale(d) - axis.labelOffset;
+    });
+
+  updateSelection.exit().remove();
+
+  updateSelection
+    .enter()
+    .append("text")
+    .text(function(d, i) {
+      const oneMillion = 1000000;
+      return d / oneMillion + "M";
+    })
+    .attr("x", 0)
+    .attr("y", function(d, i) {
+      return quantityScale(d) - axis.labelOffset;
+    });
 }
 
 var topCountries = null;
@@ -207,84 +238,74 @@ function refreshCountryAxis(addTooltips) {
       )
     );
 
-  // clear all poppers
-  $("#produce-poppers p").remove();
-
-  var selection = produceSVG
+  // update axis lines
+  var updateSelection = produceSVG
     .select("#country-axis")
     .selectAll("line")
     .data(topCountries);
 
-  // update existing axis elements
-  selection
-    .transition()
+  updateSelection
     .attr("x1", function(d, i) {
       return countryScale(d) - bar.width - bar.spacing;
     })
-    .transition()
     .attr("x2", function(d, i) {
-      // position the country label with popper
-      var label = document.createElement("p");
-      label.className = "country-label";
-      label.innerHTML = d;
-      new Popper(this, label, {
-        placement: "top",
-        modifiers: {
-          flip: {
-            enabled: false
-          },
-          preventOverflow: {
-            enabled: false
-          },
-          hide: {
-            enabled: false
-          }
-        }
-      });
-
-      document.getElementById("produce-poppers").appendChild(label);
-
       return countryScale(d) + bar.width + bar.spacing + bar.width;
     });
 
-  // remove superflous axis elements
-  selection.exit().remove();
+  updateSelection.exit().remove();
 
-  // append surplus axis elements
-  eelection
+  updateSelection
     .enter()
     .append("line")
-    .attr("x1", function(d, i) {
+    .attr("x1", function(d) {
       return countryScale(d) - bar.width - bar.spacing;
     })
     .attr("y1", margin.top)
-    .attr("x2", function(d, i) {
-      // position the country label with popper
-      var label = document.createElement("p");
-      label.className = "country-label";
-      label.innerHTML = d;
-      new Popper(this, label, {
-        placement: "top",
-        modifiers: {
-          flip: {
-            enabled: false
-          },
-          preventOverflow: {
-            enabled: false
-          },
-          hide: {
-            enabled: false
-          }
-        }
-      });
-
-      document.getElementById("produce-poppers").appendChild(label);
-
-      // return the x2 coordinate of the line
+    .attr("x2", function(d) {
       return countryScale(d) + bar.width + bar.spacing + bar.width;
     })
     .attr("y2", margin.top)
     .attr("stroke", axis.color);
+
+  // update axis labels
+  updateSelection = d3
+    .select("#country-axis-labels")
+    .selectAll(".country-axis-label")
+    .data(topCountries);
+
+  updateSelection
+    .html(function(country, i) {
+      return country;
+    })
+
+    .style("left", function(d, i) {
+      return countryScale(d) + "px";
+    });
+
+  updateSelection
+    .exit()
+    .transition()
+    .style("left", width + "px")
+    .remove();
+
+  updateSelection
+    .enter()
+    .append("div")
+    .attr("class", "country-axis-label")
+    .html(function(country, i) {
+      return country;
+    })
+    .style("position", "absolute")
+    // we set offset from bottom instead of top to account for word wrap height changes
+    .style("bottom", height - margin.top + axis.labelOffset + "px")
+    .style("left", "0px")
+    .transition()
+    .style("left", function(d, i) {
+      return countryScale(d) + "px";
+    })
+    .style("width", function(d, i) {
+      return 3 * bar.width + 2 * bar.spacing + 10 + "px";
+    });
 }
 
 function refreshBars() {
@@ -294,9 +315,6 @@ function refreshBars() {
       .selectAll("." + role + "-bar")
       .data(selectedData["countries"].sort());
 
-    if (selection.exit().size() > 0) {
-      console.log("HELLO!");
-    }
     // update bars for countries that are already in the top 10
     selection
       .transition()
