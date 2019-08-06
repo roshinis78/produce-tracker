@@ -101,12 +101,15 @@ function switchProduce() {
     .select("#year-select")
     .selectAll("option")
     .data(data["available_years"]);
-  console.log(selection);
 
   // update existing options
-  selection.html(function(year, i) {
-    return year;
-  });
+  selection
+    .html(function(year, i) {
+      return year;
+    })
+    .attr("value", function(year, i) {
+      return year;
+    });
   // remove extra options
   selection.exit().remove();
   // add surplus options
@@ -114,38 +117,56 @@ function switchProduce() {
     .enter()
     .append("option")
     .html(function(year, i) {
-      console.log(year);
+      return year;
+    })
+    .attr("value", function(year, i) {
       return year;
     });
 
-  // defaults: producer view and most recent year
+  // default to producer view
   $("#role-option-producer").attr("selected", "true");
-  $("#year-select option:last").attr("selected", true);
 
   updateDisplay();
 }
 
+var selectedRole = null;
+var selectedProduce = null;
+var selectedYear = null;
+var selectedData = null;
 function updateDisplay(
   updateQuantityScale = true, // by default update the quantity scale and axis
   fitScaleForAllYears = false, // by default, fit the quantity scale for the current year
-  addTooltips = true // by default add tooltips
+  displayYear = null
 ) {
+  // get the current selected inputs
+  selectedRole = $("#role-select").val();
+  selectedProduce = $("#produce-select").val();
+  if (displayYear == null) {
+    selectedYear = $("#year-select").val();
+  } else {
+    selectedYear = displayYear;
+  }
+  selectedData = cachedData[selectedProduce][selectedYear][selectedRole];
+
   // refresh the chart
   if (updateQuantityScale) {
     refreshQuantityAxis(fitScaleForAllYears);
   }
-  refreshCountryAxis(addTooltips);
+  refreshCountryAxis();
   refreshBars();
 
-  // enable all tooltips
-  $('[data-toggle="tooltip"]').tooltip();
+  console.log(
+    "Displaying " +
+      selectedRole +
+      " of " +
+      selectedProduce +
+      " in " +
+      selectedYear
+  );
 }
 
 // CHART REFRESH FUNCTIONS - UPDATE THE DOM
 function refreshQuantityAxis(fitScaleForAllYears) {
-  var selectedProduce = $("#produce-select").val();
-  var selectedYear = $("#year-select").val();
-
   // fit the scale to either the current year, or to all available years for the given produce
   var domainMax = cachedData[selectedProduce][selectedYear]["largest_quantity"];
   if (fitScaleForAllYears) {
@@ -217,13 +238,7 @@ function refreshQuantityAxis(fitScaleForAllYears) {
     });
 }
 
-var selectedData = null;
-function refreshCountryAxis(addTooltips) {
-  var selectedRole = $("#role-select").val();
-  var selectedProduce = $("#produce-select").val();
-  var selectedYear = $("#year-select").val();
-  selectedData = cachedData[selectedProduce][selectedYear][selectedRole];
-
+function refreshCountryAxis() {
   // update the axis scale
   countryScale = d3
     .scaleOrdinal()
@@ -272,12 +287,37 @@ function refreshCountryAxis(addTooltips) {
     .selectAll(".country-axis-label")
     .data(selectedData["countries"]);
 
+  // dispose of all tooltips
+  $('[data-toggle="tooltip"]').tooltip("dispose");
+
   updateSelection
     .html(function(country, i) {
       return country;
     })
     .style("left", function(d, i) {
       return countryScale(d) - axis.widthBuffer / 2 + "px";
+    })
+    .attr("data-toggle", "tooltip")
+    .attr("data-placement", "left")
+    .attr("data-html", true)
+    .attr("title", function(country, i) {
+      const oneMillion = 1000000;
+      var productionQuantity =
+        (selectedData["production"][i] / oneMillion).toFixed(3) + "M";
+      var importQuantity =
+        (selectedData["import"][i] / oneMillion).toFixed(3) + "M";
+      var exportQuantity =
+        (selectedData["export"][i] / oneMillion).toFixed(3) + "M";
+      return (
+        "Production: " +
+        productionQuantity +
+        "<br>" +
+        "Import: " +
+        importQuantity +
+        "<br>" +
+        "Export: " +
+        exportQuantity
+      );
     });
 
   updateSelection
@@ -290,6 +330,28 @@ function refreshCountryAxis(addTooltips) {
     .enter()
     .append("div")
     .attr("class", "country-axis-label")
+    .attr("data-toggle", "tooltip")
+    .attr("data-placement", "left")
+    .attr("data-html", true)
+    .attr("title", function(country, i) {
+      const oneMillion = 1000000;
+      var productionQuantity =
+        (selectedData["production"][i] / oneMillion).toFixed(3) + "M";
+      var importQuantity =
+        (selectedData["import"][i] / oneMillion).toFixed(3) + "M";
+      var exportQuantity =
+        (selectedData["export"][i] / oneMillion).toFixed(3) + "M";
+      return (
+        "Production: " +
+        productionQuantity +
+        "<br>" +
+        "Import: " +
+        importQuantity +
+        "<br>" +
+        "Export: " +
+        exportQuantity
+      );
+    })
     .html(function(country, i) {
       return country;
     })
@@ -304,6 +366,8 @@ function refreshCountryAxis(addTooltips) {
     .style("bottom", height + "px")
     .transition()
     .style("bottom", height - margin.top + axis.labelOffset + "px");
+
+  $('[data-toggle="tooltip"]').tooltip();
 }
 
 function refreshBars() {
@@ -364,6 +428,9 @@ function refreshBars() {
 
 // ANIMATION RELATED FUNCTIONS
 var playYearsInterval = null;
+var startYearIndex = null;
+var currentYearIndex = null;
+var availableYears = null;
 function playYears() {
   // play the animation
   if (playYearsInterval == null) {
@@ -373,53 +440,61 @@ function playYears() {
     }
     var animationSpeed = $("#animation-speed").val() * 1000;
 
+    // lock all inputs
+    $("select, #animation-speed").attr("disabled", true);
+
+    // display the currently selected year with the overall scale
+    availableYears = cachedData[selectedProduce]["available_years"];
+    startYearIndex = currentYearIndex = availableYears.indexOf(
+      parseInt($("#year-select option:selected").html())
+    );
+    updateDisplay((updateQuantityScale = true), (fitScaleForAllYears = true));
+
     // switch play button to stop button
     $("#play-button").html("<i class='fa fa-inverse fa-square'></i>");
 
-    // display the first available year, then every available year after that
-    $("#year-select option:selected").removeAttr("selected");
-    $("#year-select option:first").attr("selected", true);
-    updateDisplay(
-      (updateQuantityScale = true),
-      (fitScaleForAllYears = true),
-      (addTooltips = false)
-    );
-
-    // hide tooltips
-    $(".tooltip").hide();
-
+    // schedule switching the displayed year every 'animationSpeed' seconds
     playYearsInterval = setInterval(playNextYear, animationSpeed);
   }
   // stop the animation
   else {
-    $("#play-button").html("<i class='fa fa-inverse fa-play'></i>");
-    clearInterval(playYearsInterval);
-    updateDisplay(
-      (updateQuantityScale = false),
-      (fitScaleForAllYears = false),
-      (addTooltips = true)
-    );
-    playYearsInterval = null;
+    stopPlayingYears();
   }
 }
 
 function playNextYear() {
-  // if there are no more available years, re-enable the play button and exit
-  if ($("#year-select option:selected").next().length == 0) {
-    $("#play-button").html("<i class='fa fa-inverse fa-play'></i>");
-    clearInterval(playYearsInterval);
-    playYearsInterval = null;
+  // if there are no more available years, exit the animation
+  if (++currentYearIndex == availableYears.length) {
+    stopPlayingYears();
   }
-
-  // display the next available year
+  // otherwise, display the next available year
   else {
-    var previouslySelected = $("#year-select option:selected");
-    previouslySelected.next().attr("selected", true);
-    previouslySelected.removeAttr("selected");
+    // change the year displayed in the year select
+    document.getElementById("year-select").selectedIndex = currentYearIndex;
+
     updateDisplay(
       (updateQuantityScale = false),
       (fitScaleForAllYears = false),
-      (addTooltips = false)
+      availableYears[currentYearIndex]
     );
   }
+}
+
+function stopPlayingYears() {
+  clearInterval(playYearsInterval);
+  playYearsInterval = null;
+
+  document.getElementById("year-select").selectedIndex = startYearIndex;
+  // revert back to the year that was selected prior to the animation
+  updateDisplay(
+    (updateQuantityScale = false),
+    (fitScaleForAllYears = false),
+    availableYears[startYearIndex]
+  );
+
+  // switch back to play button
+  $("#play-button").html("<i class='fa fa-inverse fa-play'></i>");
+
+  // unlock all inputs
+  $("select, #animation-speed").removeAttr("disabled");
 }
