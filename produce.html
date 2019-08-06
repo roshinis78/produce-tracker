@@ -41,23 +41,35 @@
         <h1 class='viz-title'>Meet the Key Players</h1>
 
         <!-- Visualization user control input -->
+        <form class='d-flex flex-column flex-md-row justify-content-center mb-2'>
+            <label class='mb-2 mr-2' for='view-radio-options'><strong>View by</strong></label>
+            <div class='d-flex align-items-center'>
+                <div class='form-check form-check-inline'>
+                    <input class='form-check-input' type='radio' name='view' value='produce' id='produce-view-radio-button'> 
+                    <label class='form-check-label mb-2' for='produce-view-radio-button'>Produce</label>
+                </div>
+                <div class='form-check form-check-inline'>
+                    <input class='form-check-input' type='radio' name='view' value='country' id='country-view-radio-button'> 
+                    <label class='form-check-label mb-2' for='country-view-radio-button'>Country</label>
+                </div>
+            </div>
+        </form>
+
         <div class='d-flex flex-column flex-md-row justify-content-center mb-3'>
             <form>
                 <label for='role-select'>Top</label>
                 <select class='form-control' id='role-select'>
-                    <option id='role-option-producer' selected>Producers</option>
-                    <option>Importers</option>
-                    <option>Exporters</option>
+                    <!-- Will be filled by js with set of roles -->
                 </select>                
 
-                <label for='produce-select'>of</label>
-                <select class='form-control' id='produce-select'>
-                    <!-- Will be filled by js with set of produce -->
+                <label for='produce-country-select'>of</label>
+                <select class='form-control' id='produce-country-select'>
+                    <!-- Will be filled by js with set of produce/countries -->
                 </select>
 
                 <label for='year-select'>in</label>
                 <select class='form-control' id='year-select'>
-                    <!-- Will be filled by js with set of years -->
+                    <!-- Will be filled by js with set of available years -->
                 </select>
 
             </form>

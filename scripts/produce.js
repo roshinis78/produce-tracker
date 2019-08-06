@@ -1,18 +1,61 @@
+var view = null;
 $(document).ready(function() {
-  // if the data has not been fetched, fetch and cache it
-  if (sessionStorage.getItem("cachedData") == null) {
-    d3.json("data/top10_countries.json").then(function(data) {
-      sessionStorage.setItem("cachedData", JSON.stringify(data));
+  // add an event listener to the radio buttons for changing the view
+  $("#produce-view-radio-button, #country-view-radio-button").on(
+    "change",
+    function() {
+      // switch the view and cache it in session storage
+      view = $(this).val();
+      sessionStorage.setItem("view", view);
 
-      visualizeProduce();
-    });
+      // cache the new data in session storage
+      if (view == "produce") {
+        d3.json("data/top10_countries.json").then(function(data) {
+          sessionStorage.setItem("cachedData", JSON.stringify(data));
+          updateSelects();
+          updateDisplay();
+        });
+      } else {
+        d3.json("data/top10_crops.json").then(function(data) {
+          sessionStorage.setItem("cachedData", JSON.stringify(data));
+          updateSelects();
+          updateDisplay();
+        });
+      }
+    }
+  );
+
+  // default to produce view initially
+  if (sessionStorage.getItem("view") == null) {
+    view = "produce";
+    sessionStorage.setItem("view", "produce");
+  } else {
+    view = sessionStorage.getItem("view");
+  }
+
+  // check the radio button corresponding to the saved view
+  $("#" + view + "-view-radio-button").attr("checked", true);
+
+  // if the data has not been fetched yet, fetch and cache it
+  if (sessionStorage.getItem("cachedData") == null) {
+    if (view == "produce") {
+      d3.json("data/top10_countries.json").then(function(data) {
+        sessionStorage.setItem("cachedData", JSON.stringify(data));
+        visualizeProduce();
+      });
+    } else {
+      d3.json("data/top10_crops.json").then(function(data) {
+        sessionStorage.setItem("cachedData", JSON.stringify(data));
+        visualizeProduce();
+      });
+    }
   } else {
     visualizeProduce();
   }
 });
 
 // Visualization constants and variables
-const width = 1050;
+const width = 1100;
 const height = 600;
 const margin = { top: 80, left: 100, bottom: 40, right: 10 };
 
@@ -29,34 +72,84 @@ const bar = {
 const axis = {
   color: "#ced4da",
   labelOffset: 10, // vertical offset of label from axis line
-  widthBuffer: 20 // accounts for stuff like Netherlands being wordwrapped as Netherland <break> s
+  widthBuffer: 24 // accounts for stuff like Netherlands being wordwrapped as Netherland <break> s
 };
 
 const defaults = {
-  produce: "Poppy seed"
+  produce: "Poppy seed",
+  country: "Costa Rica"
 };
 
 var cachedData = null;
 var quantityScale = null;
-var countryScale = null;
+var topAxisScale = null;
 var produceSVG = null;
 
-function visualizeProduce() {
+// update the contents of all input selects to the visualization
+function updateSelects() {
   cachedData = JSON.parse(sessionStorage.getItem("cachedData"));
 
-  // fill the produce select with produce
-  var produceSelect = document.getElementById("produce-select");
-  cachedData["produce"].forEach(function(produce) {
-    var option = document.createElement("option");
-    option.innerHTML = produce;
-    if (produce == defaults.produce) {
-      option.selected = true;
-    }
-    produceSelect.appendChild(option);
+  // update the role select according to the current view
+  var updateSelection = d3
+    .select("#role-select")
+    .selectAll("option")
+    .data(function() {
+      if (view == "produce") {
+        return ["Producers", "Importers", "Exporters"];
+      } else {
+        return ["Produce", "Imports", "Exports"];
+      }
+    });
+
+  updateSelection.html(function(option) {
+    return option;
   });
+  updateSelection.exit().remove();
+  updateSelection
+    .enter()
+    .append("option")
+    .html(function(option) {
+      return option;
+    });
+
+  // udpate the produce/country select according to the current view
+  var defaultOptionIndex = null;
+  var updateSelection = d3
+    .select("#produce-country-select")
+    .selectAll("option")
+    .data(function() {
+      if (view == "produce") {
+        defaultOptionIndex = cachedData["produce"].indexOf(defaults.produce);
+        return cachedData["produce"];
+      }
+      defaultOptionIndex = cachedData["countries"].indexOf(defaults.country);
+      return cachedData["countries"];
+    });
+
+  updateSelection.html(function(option) {
+    return option;
+  });
+  updateSelection.exit().remove();
+  updateSelection
+    .enter()
+    .append("option")
+    .html(function(option) {
+      return option;
+    });
+
+  document.getElementById("produce-country-select").options.selectedIndex = defaultOptionIndex;
+
+  updateYearSelect();
+}
+
+function visualizeProduce() {
+  updateSelects();
 
   // VIZ USER INPUT SELECT EVENT LISTENERS
-  produceSelect.addEventListener("change", switchProduce);
+  $("#produce-country-select").on("change", function(){
+    updateYearSelect();
+    updateDisplay();
+  });
   $("#role-select").on("change", updateDisplay);
   $("#year-select").on("change", updateDisplay);
 
@@ -68,7 +161,7 @@ function visualizeProduce() {
       playYears();
     }
   });
-  document.getElementById("play-button").addEventListener("click", playYears);
+  $("#play-button").on("click", playYears);
 
   // fill in the legend colors
   $(".production-color").css("color", bar.colors.production);
@@ -84,17 +177,17 @@ function visualizeProduce() {
 
   // add groups for the axes
   produceSVG.append("g").attr("id", "quantity-axis");
-  produceSVG.append("g").attr("id", "country-axis");
+  produceSVG.append("g").attr("id", "country-produce-axis");
   d3.select("#produce-chart")
     .append("div")
-    .attr("id", "country-axis-labels");
+    .attr("id", "country-produce-axis-labels");
 
-  // set default values for select inputs + call updateDisplay
-  switchProduce();
+  updateDisplay();
 }
 
-function switchProduce() {
-  var data = cachedData[$("#produce-select").val()];
+// update the year select with available years
+function updateYearSelect() {
+  var data = cachedData[$("#produce-country-select").val()];
 
   // update the year select options
   var selection = d3
@@ -122,15 +215,10 @@ function switchProduce() {
     .attr("value", function(year, i) {
       return year;
     });
-
-  // default to producer view
-  $("#role-option-producer").attr("selected", "true");
-
-  updateDisplay();
 }
 
 var selectedRole = null;
-var selectedProduce = null;
+var selectedProduceCountry = null;
 var selectedYear = null;
 var selectedData = null;
 function updateDisplay(
@@ -140,26 +228,26 @@ function updateDisplay(
 ) {
   // get the current selected inputs
   selectedRole = $("#role-select").val();
-  selectedProduce = $("#produce-select").val();
+  selectedProduceCountry = $("#produce-country-select").val();
   if (displayYear == null) {
     selectedYear = $("#year-select").val();
   } else {
     selectedYear = displayYear;
   }
-  selectedData = cachedData[selectedProduce][selectedYear][selectedRole];
+  selectedData = cachedData[selectedProduceCountry][selectedYear][selectedRole];
 
   // refresh the chart
   if (updateQuantityScale) {
     refreshQuantityAxis(fitScaleForAllYears);
   }
-  refreshCountryAxis();
+  refreshTopAxis();
   refreshBars();
 
   console.log(
     "Displaying " +
       selectedRole +
       " of " +
-      selectedProduce +
+      selectedProduceCountry +
       " in " +
       selectedYear
   );
@@ -168,9 +256,10 @@ function updateDisplay(
 // CHART REFRESH FUNCTIONS - UPDATE THE DOM
 function refreshQuantityAxis(fitScaleForAllYears) {
   // fit the scale to either the current year, or to all available years for the given produce
-  var domainMax = cachedData[selectedProduce][selectedYear]["largest_quantity"];
+  var domainMax =
+    cachedData[selectedProduceCountry][selectedYear]["largest_quantity"];
   if (fitScaleForAllYears) {
-    domainMax = cachedData[selectedProduce]["largest_quantity"];
+    domainMax = cachedData[selectedProduceCountry]["largest_quantity"];
   }
 
   quantityScale = d3
@@ -238,32 +327,38 @@ function refreshQuantityAxis(fitScaleForAllYears) {
     });
 }
 
-function refreshCountryAxis() {
+var topPlayers = null;
+function refreshTopAxis() {
+  if (view == "produce") {
+    topPlayers = selectedData["countries"];
+  } else {
+    topPlayers = selectedData["produce"];
+  }
+
   // update the axis scale
-  countryScale = d3
+  topAxisScale = d3
     .scaleOrdinal()
-    .domain(selectedData["countries"])
+    .domain(topPlayers)
     .range(
       d3.range(
         margin.left + 20,
         width - margin.right,
-        (width - margin.right - margin.left - 20) /
-          selectedData["countries"].length
+        (width - margin.right - margin.left - 20) / topPlayers.length
       )
     );
 
   // update axis lines
   var updateSelection = produceSVG
-    .select("#country-axis")
+    .select("#country-produce-axis")
     .selectAll("line")
-    .data(selectedData["countries"]);
+    .data(topPlayers);
 
   updateSelection
     .attr("x1", function(d, i) {
-      return countryScale(d) - bar.width - bar.spacing;
+      return topAxisScale(d) - bar.width - bar.spacing;
     })
     .attr("x2", function(d, i) {
-      return countryScale(d) + bar.width + bar.spacing + bar.width;
+      return topAxisScale(d) + bar.width + bar.spacing + bar.width;
     });
 
   updateSelection.exit().remove();
@@ -272,35 +367,38 @@ function refreshCountryAxis() {
     .enter()
     .append("line")
     .attr("x1", function(d) {
-      return countryScale(d) - bar.width - bar.spacing;
+      return topAxisScale(d) - bar.width - bar.spacing;
     })
     .attr("y1", margin.top)
     .attr("x2", function(d) {
-      return countryScale(d) + bar.width + bar.spacing + bar.width;
+      return topAxisScale(d) + bar.width + bar.spacing + bar.width;
     })
     .attr("y2", margin.top)
     .attr("stroke", axis.color);
 
   // update axis labels
   updateSelection = d3
-    .select("#country-axis-labels")
-    .selectAll(".country-axis-label")
-    .data(selectedData["countries"]);
+    .select("#country-produce-axis-labels")
+    .selectAll(".country-produce-axis-label")
+    .data(topPlayers);
 
   // dispose of all tooltips
   $('[data-toggle="tooltip"]').tooltip("dispose");
 
   updateSelection
-    .html(function(country, i) {
-      return country;
+    .html(function(d, i) {
+      if(d == "Melons, other (inc.cantaloupes)"){
+        return "Melons, Cantaloupes";
+      }
+      return d;
     })
     .style("left", function(d, i) {
-      return countryScale(d) - axis.widthBuffer / 2 + "px";
+      return topAxisScale(d) - axis.widthBuffer / 2 + "px";
     })
     .attr("data-toggle", "tooltip")
     .attr("data-placement", "left")
     .attr("data-html", true)
-    .attr("title", function(country, i) {
+    .attr("title", function(d, i) {
       const oneMillion = 1000000;
       var productionQuantity =
         (selectedData["production"][i] / oneMillion).toFixed(3) + "M";
@@ -329,11 +427,11 @@ function refreshCountryAxis() {
   updateSelection
     .enter()
     .append("div")
-    .attr("class", "country-axis-label")
+    .attr("class", "country-produce-axis-label")
     .attr("data-toggle", "tooltip")
     .attr("data-placement", "left")
     .attr("data-html", true)
-    .attr("title", function(country, i) {
+    .attr("title", function(d, i) {
       const oneMillion = 1000000;
       var productionQuantity =
         (selectedData["production"][i] / oneMillion).toFixed(3) + "M";
@@ -352,12 +450,15 @@ function refreshCountryAxis() {
         exportQuantity
       );
     })
-    .html(function(country, i) {
-      return country;
+    .html(function(d, i) {
+      if(d == "Melons, other (inc.cantaloupes)"){
+        return "Melons, Cantaloupes";
+      }
+      return d;
     })
     .style("position", "absolute")
     .style("left", function(d, i) {
-      return countryScale(d) - axis.widthBuffer / 2 + "px";
+      return topAxisScale(d) - axis.widthBuffer / 2 + "px";
     })
     .style("width", function(d, i) {
       return 3 * bar.width + 2 * bar.spacing + axis.widthBuffer + "px";
@@ -374,14 +475,14 @@ function refreshBars() {
   ["production", "import", "export"].forEach(function(role) {
     var updateSelection = produceSVG
       .selectAll("." + role + "-bar")
-      .data(selectedData["countries"]);
+      .data(topPlayers);
 
     updateSelection
       .attr("x", function(d, i) {
         return {
-          production: countryScale(d) - bar.width - bar.spacing,
-          import: countryScale(d),
-          export: countryScale(d) + bar.width + bar.spacing
+          production: topAxisScale(d) - bar.width - bar.spacing,
+          import: topAxisScale(d),
+          export: topAxisScale(d) + bar.width + bar.spacing
         }[role];
       })
       .transition()
@@ -405,9 +506,9 @@ function refreshBars() {
       .append("rect")
       .attr("x", function(d, i) {
         return {
-          production: countryScale(d) - bar.width - bar.spacing,
-          import: countryScale(d),
-          export: countryScale(d) + bar.width + bar.spacing
+          production: topAxisScale(d) - bar.width - bar.spacing,
+          import: topAxisScale(d),
+          export: topAxisScale(d) + bar.width + bar.spacing
         }[role];
       })
       .attr("y", height)
@@ -444,7 +545,7 @@ function playYears() {
     $("select, #animation-speed").attr("disabled", true);
 
     // display the currently selected year with the overall scale
-    availableYears = cachedData[selectedProduce]["available_years"];
+    availableYears = cachedData[selectedProduceCountry]["available_years"];
     startYearIndex = currentYearIndex = availableYears.indexOf(
       parseInt($("#year-select option:selected").html())
     );
