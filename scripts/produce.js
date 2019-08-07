@@ -542,7 +542,7 @@ function playYears() {
     var animationSpeed = $("#animation-speed").val() * 1000;
 
     // lock all inputs
-    $("select, #animation-speed").attr("disabled", true);
+    $("select, #animation-speed, input").attr("disabled", true);
 
     // display the currently selected year with the overall scale
     availableYears = cachedData[selectedProduceCountry]["available_years"];
@@ -597,5 +597,5 @@ function stopPlayingYears() {
   $("#play-button").html("<i class='fa fa-inverse fa-play'></i>");
 
   // unlock all inputs
-  $("select, #animation-speed").removeAttr("disabled");
+  $("select, #animation-speed, input").removeAttr("disabled");
 }
