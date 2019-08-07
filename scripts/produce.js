@@ -97,7 +97,7 @@ function updateSelects() {
       if (view == "produce") {
         return ["Producers", "Importers", "Exporters"];
       } else {
-        return ["Produce", "Imports", "Exports"];
+        return ["Production", "Imports", "Exports"];
       }
     });
 
