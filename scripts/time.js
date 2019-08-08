@@ -10,20 +10,28 @@ $(function() {
 // Visualization constants and variables
 const width = 1100;
 const height = 600;
-const margin = { top: 80, left: 100, bottom: 40, right: 10 };
+const margin = { top: 35, left: 120, bottom: 40, right: 10 };
 
 const line = {
   colors: {
     production: "#f77189",
     import: "#50b131",
     export: "#3ba3ec"
-  }
+  },
+  thicc: 3,
+  pointRadius: 3
 };
 
 const axis = {
   color: "#ced4da",
   labelOffset: 10, // vertical offset of label from axis line
-  labelWidth: 38
+  labelWidth: 38,
+  verticalAxisMarginTop: 20 // vertical offset from the top of the graph
+};
+
+const defaults = {
+  produce: "Pineapples",
+  country: "Costa Rica"
 };
 
 const oneMillion = 1000000;
@@ -40,7 +48,8 @@ function visualizeTime() {
 
   // add event listeners
   $("#country-select").on("change", function() {
-    updateProduceSelect();
+    // maintain the currently selected produce if available for the new country
+    updateProduceSelect($("#produce-select").val());
     updateDisplay();
   });
   $("#produce-select").on("change", updateDisplay);
@@ -52,8 +61,11 @@ function visualizeTime() {
     option.innerHTML = country;
     countrySelect.appendChild(option);
   });
+  countrySelect.options.selectedIndex = cachedData["countries"].indexOf(
+    defaults.country
+  );
 
-  updateProduceSelect();
+  updateProduceSelect(defaults.produce);
 
   // create the svg for the visualization
   timeSVG = d3
@@ -70,11 +82,14 @@ function visualizeTime() {
   updateDisplay();
 }
 
-function updateProduceSelect() {
+// update the options in the produce select; by default, select the produce passed in as 'defaultSelected'
+function updateProduceSelect(defaultSelected) {
+  var availableProduce = cachedData[$("#country-select").val()]["produce"];
+
   var updateSelection = d3
     .select("#produce-select")
     .selectAll("option")
-    .data(cachedData[$("#country-select").val()]["produce"]);
+    .data(availableProduce);
 
   updateSelection.html(function(produce) {
     return produce;
@@ -88,8 +103,19 @@ function updateProduceSelect() {
     .html(function(produce) {
       return produce;
     });
+
+  // by default select the given produce if it is available for the given country
+  var defaultSelectedIndex = availableProduce.indexOf(defaultSelected);
+  if (defaultSelectedIndex != -1) {
+    document.getElementById(
+      "produce-select"
+    ).options.selectedIndex = defaultSelectedIndex;
+  } else {
+    document.getElementById("produce-select").options.selectedIndex = 0;
+  }
 }
 
+// update the svg drawn to the screen based on the user's selected input
 function updateDisplay() {
   var selectedData =
     cachedData[$("#country-select").val()][$("#produce-select").val()];
@@ -98,7 +124,7 @@ function updateDisplay() {
   quantityScale = refreshAxis(
     "#quantity-axis",
     [0, selectedData["largest_quantity"]],
-    [height - margin.bottom, margin.top],
+    [height - margin.bottom, margin.top + axis.verticalAxisMarginTop],
     "vertical",
     "linear",
     function(quantity) {
@@ -122,7 +148,17 @@ function updateDisplay() {
     }
   );
 
-  var produceLine = d3
+  // redraw the lines and circles
+  timeSVG.selectAll("path").remove();
+  timeSVG.selectAll("circle").remove();
+
+  addQuantityLine(selectedData["Production"], line.colors.production);
+  addQuantityLine(selectedData["Imports"], line.colors.import);
+  addQuantityLine(selectedData["Exports"], line.colors.export);
+}
+
+function addQuantityLine(data, color) {
+  var pathGenerator = d3
     .line()
     .x(function(d) {
       return timeScale(d["year"]);
@@ -131,7 +167,30 @@ function updateDisplay() {
       return quantityScale(d["quantity"]);
     });
 
-  timeSVG.append("path").datum(selectedData["Production"]).attr("d", produceLine);
+  // add the path
+  timeSVG
+    .append("path")
+    .datum(data)
+    .attr("d", pathGenerator)
+    .attr("fill", "transparent")
+    .attr("stroke", color)
+    .attr("stroke-width", line.thicc);
+
+  // add points
+  timeSVG
+    .selectAll("points")
+    .data(data)
+    .enter()
+    .append("circle")
+    .attr("cx", function(d) {
+      return timeScale(d["year"]);
+    })
+    .attr("cy", function(d) {
+      return quantityScale(d["quantity"]);
+    })
+    .attr("r", line.pointRadius)
+    .attr("fill", color)
+    .attr("stroke", color);
 }
 
 function refreshAxis(
