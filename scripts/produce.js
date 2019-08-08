@@ -59,6 +59,8 @@ const width = 1100;
 const height = 600;
 const margin = { top: 80, left: 100, bottom: 40, right: 10 };
 
+const oneMillion = 1000000;
+
 const bar = {
   width: 20,
   spacing: 5,
@@ -305,9 +307,9 @@ function refreshQuantityAxis(fitScaleForAllYears) {
 
   updateSelection
     .text(function(d, i) {
-      const oneMillion = 1000000;
       return d / oneMillion + "M";
     })
+    .transition()
     .attr("y", function(d, i) {
       return quantityScale(d) - axis.labelOffset;
     });
@@ -318,7 +320,6 @@ function refreshQuantityAxis(fitScaleForAllYears) {
     .enter()
     .append("text")
     .text(function(d, i) {
-      const oneMillion = 1000000;
       return d / oneMillion + "M";
     })
     .attr("x", 0)
@@ -399,7 +400,6 @@ function refreshTopAxis() {
     .attr("data-placement", "left")
     .attr("data-html", true)
     .attr("title", function(d, i) {
-      const oneMillion = 1000000;
       var productionQuantity =
         (selectedData["production"][i] / oneMillion).toFixed(3) + "M";
       var importQuantity =
@@ -432,7 +432,6 @@ function refreshTopAxis() {
     .attr("data-placement", "left")
     .attr("data-html", true)
     .attr("title", function(d, i) {
-      const oneMillion = 1000000;
       var productionQuantity =
         (selectedData["production"][i] / oneMillion).toFixed(3) + "M";
       var importQuantity =

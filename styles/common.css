@@ -13,6 +13,7 @@
   background-color: #d34514;
 }
 
+/* Visualization aesthetics */
 .viz-title {
   text-align: center;
   font-weight: bolder;
@@ -20,8 +21,28 @@
   margin-bottom: 1rem;
 }
 
-.viz-intro {
-  text-align: center;
-  font-weight: lighter;
-  font-size: 24px;
+.chart {
+  overflow-x: scroll;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  position: relative;
+}
+
+/* Form aesthetics */ 
+form {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  form{
+    flex-direction: row;
+  }
+}
+
+label {
+  padding: 0.5rem 0.6rem 0rem;
+  white-space: pre;
 }
