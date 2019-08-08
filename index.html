@@ -12,6 +12,9 @@
     <!-- Font Awesome -->
     <script src='https://kit.fontawesome.com/70564c4270.js'></script>
 
+    <!-- Bootstrap social -->
+    <link rel='stylesheet' href='styles/bootstrap-social.css'>
+
     <!-- My custom stylesheets -->
     <link rel='stylesheet' href='styles/index.css'>
     <link rel='stylesheet' href='styles/common.css'>
@@ -19,7 +22,7 @@
 
 <body>
     <!-- bootstrap navbar repurposed as header -->
-    <nav class='navbar navbar-dark navbar-expand-md bg-orange'>
+    <nav class='navbar navbar-light navbar-expand-md bg-white'>
         <div class='container'>
             <button class='navbar-toggler mr-2' data-toggle='collapse' data-target='#navigation-links'>
                 <span class='navbar-toggler-icon'></span>
@@ -37,57 +40,55 @@
         </div>
     </nav>
 
-    <div class='container bg-semitransparent w-90 w-md-60 mt-3 rounded'>
-        <div class='p-3 pb-4'>
-            <div class='intro-container'>
-                <h1>Welcome to the Produce Flow Tracker!</h1>
-                <p>
-                    Produce Flow refers to the global flow of produce across countries and regions. Through this series of
-                    visualizations, we have created an invaluable analytics tool to study individual crop flows or country flows
-                    to allow users to explore data provided by the Food and Agriculture Organization of the United Nations.
-                </p>
-
-                <h3>Meet the Developers</h3>
-                <h5>
-                    Roshini Saravanakumar
-                    <a target='_blank' href='https://roshinis78.github.io/my-website/'><i class='fas fa-globe'></i></a>
-                    <a target='_blank' href='https://www.linkedin.com/in/roshini-saravanakumar/'><i
-                            class='fab fa-linkedin'></i></a>
-                    <a target='_blank' href='https://www.github.com/roshinis78/'><i class='fab fa-github'></i></a>
-                </h5>
-                <p><i>Visualization, Analytics & Development</i></p>
-                <p>
-                    Roshini is currently a rising junior mastering Computer Engineering at the University of
-                    Illinois
-                    at Urbana-Champaign. She harnesses the powers of D3.js, pandas, Bootstrap, and Node.js,
-                    along with her relentless creativity, to create purposeful and impactful data visualizations
-                    and
-                    websites.
-                </p>
-
-                <h5>
-                    Rajesh Mohan
-                    <a target='_blank' href='https://www.linkedin.com/in/rajeshmohanasundaram'><i
-                            class='fab fa-linkedin'></i></a>
-                </h5>
-                <p><i>Data Curator & Mentor</i></p>
-                <p>
-                    Rajesh has 20 years of experience within the data analytics indsutry and is currently the
-                    Senior Manager of Data Integration at Harvard University. His passion for environmentalism
-                    has drawn him to explore and investigate how the patterns of produce flow create potential
-                    environmental hazards.
-                </p>
-            </div>
+    <div class='container d-flex justify-content-center mt-5 pt-3 mb-5 pb-3'>
+        <div class='smaller-container'>
+            <h1 class='text-center mb-3 viz-title'>Welcome to the Produce Flow Tracker!</h1>
+            <p>
+                Produce Flow refers to the global flow of produce across countries and regions. Through this series of
+                visualizations, we have created an invaluable analytics tool to study individual crop flows or country flows
+                to allow users to explore data provided by the Food and Agriculture Organization of the United Nations.
+            </p>
+            <h3>Meet the Developers</h3>
+            <h5>
+                Roshini Saravanakumar
+                <a class='badge btn-vimeo' target='_blank' href='https://roshinis78.github.io/my-website/'>
+                    <i class='fas fa-globe'></i></a>
+                <a class='badge btn-linkedin' target='_blank' href='https://www.linkedin.com/in/roshini-saravanakumar/'>
+                    <i class='fab fa-linkedin'></i></a>
+                <a class='badge btn-github' target='_blank' href='https://www.github.com/roshinis78/'>
+                    <i class='fab fa-github'></i></a>
+            </h5>
+            <p><i>Visualization, Analytics & Development</i></p>
+            <p>
+                Roshini is currently a rising junior mastering Computer Engineering at the University of
+                Illinois
+                at Urbana-Champaign. She harnesses the powers of D3.js, pandas, Bootstrap, and Node.js,
+                along with her relentless creativity, to create purposeful and impactful data visualizations
+                and
+                websites.
+            </p>
+            <h5>
+                Rajesh Mohan
+                <a class='badge btn-linkedin' target='_blank' href='https://www.linkedin.com/in/rajeshmohanasundaram'>
+                    <i class='fab fa-linkedin'></i></a>
+            </h5>
+            <p><i>Data Curator & Mentor</i></p>
+            <p>
+                Rajesh has 20 years of experience within the data analytics indsutry and is currently the
+                Senior Manager of Data Integration at Harvard University. His passion for environmentalism
+                has drawn him to explore and investigate how the patterns of produce flow create potential
+                environmental hazards.
+            </p>
 
             <div class='row justify-content-center'>
-                <a class='btn bg-primary text-white' href='https://github.com/roshinis78/produce-flow'
-                    target='_blank'>View this
-                    project on GitHub<i class='ml-1 fa fa-lg fa-github'></i></a>
+                <a class='btn btn-github' href='https://github.com/roshinis78/produce-flow'
+                    target='_blank'>
+                    View this project on GitHub <i class='ml-1 fab fa-lg fa-github'></i></a>
             </div>
 
             <div class='row justify-content-center mt-3'>
-                <a class='btn bg-success text-white' href='mailto:roshini2@illinois.edu' target='_blank'>Suggestions?<i
-                        class='ml-1 fa fa-lg fa-envelope-o'></i></a>
+                <a class='btn btn-vimeo' href='mailto:roshini2@illinois.edu' target='_blank'>
+                    Suggestions? <i class='ml-1 fa fa-lg fa-envelope-o'></i></a>
             </div>
         </div>
     </div>
