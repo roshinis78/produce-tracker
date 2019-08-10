@@ -65,9 +65,9 @@ const bar = {
   width: 20,
   spacing: 5,
   colors: {
-    production: "#f77189",
-    import: "#50b131",
-    export: "#3ba3ec"
+    production: '#387959',
+    import: '#cbdcee', 
+    export: '#74aeaf'
   }
 };
 

@@ -14,9 +14,9 @@ const margin = { top: 35, left: 120, bottom: 40, right: 10 };
 
 const line = {
   colors: {
-    production: "#f77189",
-    import: "#50b131",
-    export: "#3ba3ec"
+    production: '#387959',
+    import: '#cbdcee', 
+    export: '#74aeaf'
   },
   thicc: 3,
   pointRadius: 3
