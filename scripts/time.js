@@ -1,9 +1,20 @@
+var line = {
+  colors: {},
+  thicc: 3,
+  pointRadius: 3
+};
 var cachedData = null;
+
 $(function() {
   d3.json("data/time_analysis.json").then(function(data) {
     // cache the data and visualize
     cachedData = data;
-    visualizeTime();
+
+    // read the palette
+    d3.json("data/color_palette.json").then(function(palette) {
+      line.colors = palette;
+      visualizeTime();
+    });
   });
 });
 
@@ -11,16 +22,6 @@ $(function() {
 const width = 1100;
 const height = 600;
 const margin = { top: 35, left: 120, bottom: 40, right: 10 };
-
-const line = {
-  colors: {
-    production: '#387959',
-    import: '#cbdcee', 
-    export: '#74aeaf'
-  },
-  thicc: 3,
-  pointRadius: 3
-};
 
 const axis = {
   color: "#ced4da",

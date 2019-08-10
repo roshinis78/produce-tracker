@@ -1,57 +1,68 @@
+const bar = {
+  width: 20,
+  spacing: 5,
+  colors: {}
+};
 var view = null;
-$(document).ready(function() {
-  // add an event listener to the radio buttons for changing the view
-  $("#produce-view-radio-button, #country-view-radio-button").on(
-    "change",
-    function() {
-      // switch the view and cache it in session storage
-      view = $(this).val();
-      sessionStorage.setItem("view", view);
 
-      // cache the new data in session storage
+$(document).ready(function() {
+  // read the palette then do anything
+  d3.json("data/color_palette.json").then(function(palette) {
+    bar.colors = palette;
+
+    // add an event listener to the radio buttons for changing the view
+    $("#produce-view-radio-button, #country-view-radio-button").on(
+      "change",
+      function() {
+        // switch the view and cache it in session storage
+        view = $(this).val();
+        sessionStorage.setItem("view", view);
+
+        // cache the new data in session storage
+        if (view == "produce") {
+          d3.json("data/top10_countries.json").then(function(data) {
+            sessionStorage.setItem("cachedData", JSON.stringify(data));
+            updateSelects();
+            updateDisplay();
+          });
+        } else {
+          d3.json("data/top10_crops.json").then(function(data) {
+            sessionStorage.setItem("cachedData", JSON.stringify(data));
+            updateSelects();
+            updateDisplay();
+          });
+        }
+      }
+    );
+
+    // default to produce view initially
+    if (sessionStorage.getItem("view") == null) {
+      view = "produce";
+      sessionStorage.setItem("view", "produce");
+    } else {
+      view = sessionStorage.getItem("view");
+    }
+
+    // check the radio button corresponding to the saved view
+    $("#" + view + "-view-radio-button").attr("checked", true);
+
+    // if the data has not been fetched yet, fetch and cache it
+    if (sessionStorage.getItem("cachedData") == null) {
       if (view == "produce") {
         d3.json("data/top10_countries.json").then(function(data) {
           sessionStorage.setItem("cachedData", JSON.stringify(data));
-          updateSelects();
-          updateDisplay();
+          visualizeProduce();
         });
       } else {
         d3.json("data/top10_crops.json").then(function(data) {
           sessionStorage.setItem("cachedData", JSON.stringify(data));
-          updateSelects();
-          updateDisplay();
+          visualizeProduce();
         });
       }
-    }
-  );
-
-  // default to produce view initially
-  if (sessionStorage.getItem("view") == null) {
-    view = "produce";
-    sessionStorage.setItem("view", "produce");
-  } else {
-    view = sessionStorage.getItem("view");
-  }
-
-  // check the radio button corresponding to the saved view
-  $("#" + view + "-view-radio-button").attr("checked", true);
-
-  // if the data has not been fetched yet, fetch and cache it
-  if (sessionStorage.getItem("cachedData") == null) {
-    if (view == "produce") {
-      d3.json("data/top10_countries.json").then(function(data) {
-        sessionStorage.setItem("cachedData", JSON.stringify(data));
-        visualizeProduce();
-      });
     } else {
-      d3.json("data/top10_crops.json").then(function(data) {
-        sessionStorage.setItem("cachedData", JSON.stringify(data));
-        visualizeProduce();
-      });
+      visualizeProduce();
     }
-  } else {
-    visualizeProduce();
-  }
+  });
 });
 
 // Visualization constants and variables
@@ -60,16 +71,6 @@ const height = 600;
 const margin = { top: 80, left: 100, bottom: 40, right: 10 };
 
 const oneMillion = 1000000;
-
-const bar = {
-  width: 20,
-  spacing: 5,
-  colors: {
-    production: '#387959',
-    import: '#cbdcee', 
-    export: '#74aeaf'
-  }
-};
 
 const axis = {
   color: "#ced4da",
@@ -139,7 +140,9 @@ function updateSelects() {
       return option;
     });
 
-  document.getElementById("produce-country-select").options.selectedIndex = defaultOptionIndex;
+  document.getElementById(
+    "produce-country-select"
+  ).options.selectedIndex = defaultOptionIndex;
 
   updateYearSelect();
 }
@@ -148,7 +151,7 @@ function visualizeProduce() {
   updateSelects();
 
   // VIZ USER INPUT SELECT EVENT LISTENERS
-  $("#produce-country-select").on("change", function(){
+  $("#produce-country-select").on("change", function() {
     updateYearSelect();
     updateDisplay();
   });
@@ -388,7 +391,7 @@ function refreshTopAxis() {
 
   updateSelection
     .html(function(d, i) {
-      if(d == "Melons, other (inc.cantaloupes)"){
+      if (d == "Melons, other (inc.cantaloupes)") {
         return "Melons, Cantaloupes";
       }
       return d;
@@ -450,7 +453,7 @@ function refreshTopAxis() {
       );
     })
     .html(function(d, i) {
-      if(d == "Melons, other (inc.cantaloupes)"){
+      if (d == "Melons, other (inc.cantaloupes)") {
         return "Melons, Cantaloupes";
       }
       return d;
@@ -480,8 +483,8 @@ function refreshBars() {
       .attr("x", function(d, i) {
         return {
           production: topAxisScale(d) - bar.width - bar.spacing,
-          import: topAxisScale(d),
-          export: topAxisScale(d) + bar.width + bar.spacing
+          export: topAxisScale(d),
+          import: topAxisScale(d) + bar.width + bar.spacing
         }[role];
       })
       .transition()
@@ -506,8 +509,8 @@ function refreshBars() {
       .attr("x", function(d, i) {
         return {
           production: topAxisScale(d) - bar.width - bar.spacing,
-          import: topAxisScale(d),
-          export: topAxisScale(d) + bar.width + bar.spacing
+          export: topAxisScale(d),
+          import: topAxisScale(d) + bar.width + bar.spacing
         }[role];
       })
       .attr("y", height)
