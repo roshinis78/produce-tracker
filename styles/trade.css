@@ -1,0 +1,26 @@
+.toolbar {
+    position: fixed;
+    top: 10%;
+    left: 0;
+    z-index: 1030;
+
+    width: 25%;
+    height: 85%;
+
+    display: flex;
+    flex-direction: column;
+
+    background: white;
+    border: gainsboro 1px solid; 
+    border-top-right-radius: 0.25rem;
+    border-bottom-right-radius: 0.25rem;
+}
+
+.toolbar-title {
+    padding: 1rem;
+    border-bottom: gainsboro 1px solid; 
+}
+
+.toolbar-content {
+    padding: 1rem;
+}

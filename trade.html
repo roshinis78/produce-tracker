@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+
+<head>
+  <title>Produce Flow Tracker</title>
+
+  <!-- Bootstrap -->
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width initial-scale=1 shrink-to-fit=no'>
+  <link rel='stylesheet' href='https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css'
+    integrity='sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T' crossorigin='anonymous'>
+
+  <!-- Font Awesome -->
+  <script src='https://kit.fontawesome.com/70564c4270.js'></script>
+
+  <!-- My custom stylesheets -->
+  <link rel='stylesheet' href='styles/trade.css'>
+  <link rel='stylesheet' href='styles/common.css'>
+</head>
+
+<body>
+  <!-- bootstrap navbar repurposed as header -->
+  <nav class='navbar navbar-light navbar-expand-md bg-white'>
+    <div class='container'>
+      <button class='navbar-toggler mr-2' data-toggle='collapse' data-target='#navigation-links'>
+        <span class='navbar-toggler-icon'></span>
+      </button>
+
+      <a class='navbar-brand mr-auto' href='index.html'>Produce Flow Tracker</a>
+
+      <div class='collapse navbar-collapse' id='navigation-links'>
+        <ul class='navbar-nav ml-auto'>
+          <li class='nav-item'><a class='nav-link' href='index.html'>Introduction</a></li>
+          <li class='nav-item '><a class='nav-link' href='produce.html'>Produce Analysis</a></li>
+          <li class='nav-item'><a class='nav-link' href='time.html'>Time Analysis</a></li>
+          <li class='nav-item active'><a class='nav-link' href='#'>Trade Analysis</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class='container mt-3'>
+    <!-- Visualization user control input -->
+    <div class='d-flex flex-column flex-md-row justify-content-center mb-3'>
+
+    </div>
+
+    <!-- Visualization will be generated here -->
+    <div class='row'>
+      <div class='chart' id='trade-chart'></div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class='toolbar'>
+      <h1 class='toolbar-title'>Worldview Toolbar</h1>
+
+      <div class='toolbar-content'>
+        <h3>Current View</h3>
+        <form class='d-flex justify-content-start'>
+          <input type='radio' name='imports-exports-radio' value='top-imports' id='top-imports-radio'>
+          <label for='top-imports-radio'>Top Imports</label>
+
+          <input type='radio' name='imports-exports-radio' value='top-exports' id='top-exports-radio'>
+          <label for='top-exports-radio'>Top Exports</label>
+        </form>
+
+        <div id='current-view-list'>
+
+        </div>
+      </div>
+
+      <!-- Form to add countries to the display -->
+      <form class='toolbar-content'>
+        <div class='input-group'>
+            <input class='form-control' type='text' placeholder='add country to view'>
+            <div class='input-group-append'>
+              <button class='btn btn-success' type='button'><i class='fa fa-plus'></i></button>
+            </div>
+        </div>
+      </form>
+
+    </div>
+
+
+  </div>
+
+  <!-- Bootstrap -->
+  <script src='https://code.jquery.com/jquery-3.3.1.slim.min.js'
+    integrity='sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo'
+    crossorigin='anonymous'></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js'
+    integrity='sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1'
+    crossorigin='anonymous'></script>
+  <script src='https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js'
+    integrity='sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM'
+    crossorigin='anonymous'></script>
+
+  <!-- D3.js -->
+  <script src='https://d3js.org/d3.v5.min.js'></script>
+
+  <!-- Visualization code -->
+  <script src='scripts/trade.js'></script>
+</body>
+
+</html>
