@@ -45,22 +45,22 @@
   <div class='toolbar'>
     <h1 class='toolbar-title'>Worldview Toolbar</h1>
 
-    <div class='toolbar-content'>
+    <div class='toolbar-content' id='view-info'>
       <h3>Current View</h3>
       <form class='d-flex justify-content-start'>
-        <input type='radio' name='imports-exports-radio' value='top-imports' id='top-imports-radio'>
+        <input type='radio' name='imports-exports-radio' value='top-imports' id='top-imports-radio' checked>
         <label for='top-imports-radio'>Top Imports</label>
         <input type='radio' name='imports-exports-radio' value='top-exports' id='top-exports-radio'>
         <label for='top-exports-radio'>Top Exports</label>
       </form>
 
-      <div id='current-view-list'>
-      </div>
+      <ul id='current-view-list'>
+      </ul>
 
     </div>
 
     <!-- Form to add countries to the display -->
-    <form class='toolbar-content'>
+    <form class='toolbar-content mt-auto'>
       <div class='input-group'>
           <select class='form-control' id='add-country-select'>
             <!-- Options will be filled with available countries by js -->

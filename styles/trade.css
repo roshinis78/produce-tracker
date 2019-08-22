@@ -5,7 +5,7 @@
     z-index: 1030;
 
     width: 26%;
-    height: 85%;
+    height: 60%;
 
     display: flex;
     flex-direction: column;
@@ -31,4 +31,34 @@
 
 #trade-chart {
     overflow-y: scroll; 
+}
+
+#view-info {
+    height: 60%;
+}
+
+#current-view-list {
+    list-style-type: none;
+    padding: 0.5rem;
+
+    height: 100%;
+    overflow-y: scroll;
+
+    border: gainsboro 1px solid;
+    border-radius: 0.25rem;
+}
+
+.remove-country-button {
+    color: #dc3545;
+    background: none;
+    border: none;
+    margin-left: auto;
+}
+
+.remove-country-button:hover {
+    color: #c82333;
+}
+
+.remove-country-button:focus {
+    outline: none;
 }

@@ -11,9 +11,11 @@ var line = {
 
 var tradeSVG = null;
 var mapProjection = null;
-var selectedCountries = [];
 var addedCountry = null;
 var tradeJSON = null;
+var activeCountryIDs = new Map();
+var colorIndex = 0;
+const colorStep = 28;
 
 $(function() {
   // add event listeners
@@ -26,12 +28,33 @@ $(function() {
     }
   });
 
-  // add selected country to display on button click
+  // add selected country to display on button click if it is not already being displayed
   $("#add-country-button").on("click", function() {
-    addedCountry = $("#add-country-select").val();
-    selectedCountries.push(addedCountry);
-    visualizeTrade();
-    console.log("Added " + addedCountry + " to display!");
+    if (!activeCountryIDs.has($("#add-country-select").val())) {
+      // add the country to the display
+      addedCountry = $("#add-country-select").val();
+      activeCountryIDs.set(addedCountry, createCountryID(addedCountry));
+      visualizeTrade();
+
+      // add the country to the display list
+      d3.select("#current-view-list")
+        .append("li")
+        .attr("width", "100%")
+        .attr("id", activeCountryIDs.get(addedCountry) + "-list-element")
+        .append("h5")
+        .attr("class", "d-flex")
+        .html(
+          "<i class='fas fa-square mr-2' style='color:" +
+            line.colors[colorIndex] +
+            "'></i>" +
+            "<span>" +
+            addedCountry +
+            "</span>" +
+            "<button type='button' class='remove-country-button' onclick='removeCountry(this)'><i class='fas fa-minus-circle'></i></button>"
+        );
+
+      console.log("Added " + addedCountry + " to display!");
+    }
   });
 
   // read the map data
@@ -50,8 +73,8 @@ $(function() {
     drawMap(data);
 
     // read the color palette
-    d3.json("data/color_palette.json").then(function(colors) {
-      line.colors = colors;
+    d3.json("data/country_colors.json").then(function(data) {
+      line.colors = data.colors;
 
       // read the trade dataset
       d3.json("data/trade_top_imports.json").then(function(data) {
@@ -75,24 +98,6 @@ $(function() {
 function drawMap(data) {
   mapProjection = d3.geoMercator().fitWidth(width, data);
   var pathGenerator = d3.geoPath(mapProjection);
-
-  var mapPalette = [
-    "#a1c9f4",
-    "#ffb482",
-    "#8de5a1",
-    "#ff9f9b",
-    "#d0bbff",
-    "#debb9b",
-    "#fab0e4",
-    "#cfcfcf",
-    "#fffea3",
-    "#b9f2f0",
-    "#a1c9f4",
-    "#ffb482",
-    "#8de5a1",
-    "#ff9f9b",
-    "#d0bbff"
-  ];
 
   tradeSVG
     .select("#map")
@@ -119,7 +124,7 @@ function visualizeTrade() {
   tradeSVG
     .select("#trade-lines")
     .append("g")
-    .attr("id", createCountryID(addedCountry))
+    .attr("id", activeCountryIDs.get(addedCountry) + "-trade-line")
     .selectAll("path")
     .data(tradeJSON[addedCountry]["previous_goods_only"])
     .enter()
@@ -131,12 +136,19 @@ function visualizeTrade() {
       ];
     })
     .attr("d", pathGenerator)
-    .style("stroke", line.colors.import)
+    .style("stroke", function(d, i) {
+      if (i == 0) {
+        colorIndex = (colorIndex + colorStep) % line.colors.length;
+      }
+      return line.colors[colorIndex];
+    })
     .style("stroke-width", "2px");
 
   // circles for countries
   tradeSVG
-    .select("#trade-lines #" + createCountryID(addedCountry))
+    .select(
+      "#trade-lines #" + activeCountryIDs.get(addedCountry) + "-trade-line"
+    )
     .selectAll("circle")
     .data(tradeJSON[addedCountry]["previous_goods_only"])
     .enter()
@@ -159,4 +171,21 @@ function createCountryID(country) {
     .replace(/\s/g, "-")
     .replace(/\'/, "-")
     .replace(/,/, "");
+}
+
+// remove a country from the display and display list
+function removeCountry(buttonElement) {
+  var countryToDelete = $(buttonElement)
+    .prev()
+    .html();
+  var countryToDeleteID = activeCountryIDs.get(countryToDelete);
+
+  // remove country from list
+  $("#" + countryToDeleteID + "-list-element").remove();
+
+  // remove country from the display
+  $("#" + countryToDeleteID + "-trade-line").remove();
+  activeCountryIDs.delete(countryToDelete);
+
+  console.log("Removed " + countryToDelete + " from display");
 }
