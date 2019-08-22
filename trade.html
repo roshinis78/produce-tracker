@@ -38,49 +38,39 @@
     </div>
   </nav>
 
-  <div class='container mt-3'>
-    <!-- Visualization user control input -->
-    <div class='d-flex flex-column flex-md-row justify-content-center mb-3'>
+  <!-- Visualization will be generated here -->
+  <div class='chart' id='trade-chart'></div>
 
-    </div>
+  <!-- Toolbar -->
+  <div class='toolbar'>
+    <h1 class='toolbar-title'>Worldview Toolbar</h1>
 
-    <!-- Visualization will be generated here -->
-    <div class='row'>
-      <div class='chart' id='trade-chart'></div>
-    </div>
-
-    <!-- Toolbar -->
-    <div class='toolbar'>
-      <h1 class='toolbar-title'>Worldview Toolbar</h1>
-
-      <div class='toolbar-content'>
-        <h3>Current View</h3>
-        <form class='d-flex justify-content-start'>
-          <input type='radio' name='imports-exports-radio' value='top-imports' id='top-imports-radio'>
-          <label for='top-imports-radio'>Top Imports</label>
-
-          <input type='radio' name='imports-exports-radio' value='top-exports' id='top-exports-radio'>
-          <label for='top-exports-radio'>Top Exports</label>
-        </form>
-
-        <div id='current-view-list'>
-
-        </div>
-      </div>
-
-      <!-- Form to add countries to the display -->
-      <form class='toolbar-content'>
-        <div class='input-group'>
-            <input class='form-control' type='text' placeholder='add country to view'>
-            <div class='input-group-append'>
-              <button class='btn btn-success' type='button'><i class='fa fa-plus'></i></button>
-            </div>
-        </div>
+    <div class='toolbar-content'>
+      <h3>Current View</h3>
+      <form class='d-flex justify-content-start'>
+        <input type='radio' name='imports-exports-radio' value='top-imports' id='top-imports-radio'>
+        <label for='top-imports-radio'>Top Imports</label>
+        <input type='radio' name='imports-exports-radio' value='top-exports' id='top-exports-radio'>
+        <label for='top-exports-radio'>Top Exports</label>
       </form>
 
+      <div id='current-view-list'>
+      </div>
+
     </div>
 
+    <!-- Form to add countries to the display -->
+    <form class='toolbar-content'>
+      <div class='input-group'>
+          <select class='form-control' id='add-country-select'>
+            <!-- Options will be filled with available countries by js -->
+          </select>
 
+          <div class='input-group-append'>
+            <button class='btn btn-success' type='button' id='add-country-button'><i class='fa fa-plus'></i></button>
+          </div>
+      </div>
+    </form>
   </div>
 
   <!-- Bootstrap -->
