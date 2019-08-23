@@ -39,7 +39,9 @@
   </nav>
 
   <!-- Visualization will be generated here -->
-  <div class='chart' id='trade-chart'></div>
+  <div class='chart' id='trade-chart'>
+    <div id='trade-chart-labels'></div>
+  </div>
 
   <!-- Toolbar -->
   <div class='toolbar'>
@@ -47,6 +49,13 @@
 
     <div class='toolbar-content' id='view-info'>
       <h3>Current View</h3>
+      <form class='d-flex justify-content-start'>
+        <input type='radio' name='goods-radio' value='all_goods' id='all-goods-radio'>
+        <label for='all-goods-radio'>Show all goods</label>
+        <input type='radio' name='goods-radio' value='previous_goods_only' id='only-produce-radio' checked>
+        <label for='only-produce-radio'>Show only produce</label>
+      </form>
+
       <form class='d-flex justify-content-start'>
         <input type='radio' name='imports-exports-radio' value='top-imports' id='top-imports-radio' checked>
         <label for='top-imports-radio'>Top Imports</label>

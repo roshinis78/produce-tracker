@@ -31,6 +31,8 @@
 
 #trade-chart {
     overflow-y: scroll; 
+    position: relative;
+    padding: 0px;
 }
 
 #view-info {
