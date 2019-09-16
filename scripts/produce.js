@@ -18,6 +18,16 @@ $(document).ready(function() {
         view = $(this).val();
         sessionStorage.setItem("view", view);
 
+        // update the select labels
+        if (view == "produce") {
+          $("#role-select").prev().html("Top 10");
+          $("#produce-country-select").prev().html("of");
+        }
+        else {
+          $("#role-select").prev().html("Top 10 Crops");
+          $("#produce-country-select").prev().html("by");
+        }
+
         // cache the new data in session storage
         if (view == "produce") {
           d3.json("data/top10_countries.json").then(function(data) {
@@ -100,7 +110,7 @@ function updateSelects() {
       if (view == "produce") {
         return ["Producers", "Importers", "Exporters"];
       } else {
-        return ["Production", "Imports", "Exports"];
+        return ["Produced", "Imported", "Exported"];
       }
     });
 
@@ -329,6 +339,7 @@ function refreshQuantityAxis(fitScaleForAllYears) {
     .attr("y", function(d, i) {
       return quantityScale(d) - axis.labelOffset;
     });
+
 }
 
 var topPlayers = null;
@@ -404,19 +415,19 @@ function refreshTopAxis() {
     .attr("data-html", true)
     .attr("title", function(d, i) {
       var productionQuantity =
-        (selectedData["production"][i] / oneMillion).toFixed(3) + "M";
+        (selectedData["production"][i] / oneMillion).toFixed(3) + "M Tonnes";
       var importQuantity =
-        (selectedData["import"][i] / oneMillion).toFixed(3) + "M";
+        (selectedData["import"][i] / oneMillion).toFixed(3) + "M Tonnes";
       var exportQuantity =
-        (selectedData["export"][i] / oneMillion).toFixed(3) + "M";
+        (selectedData["export"][i] / oneMillion).toFixed(3) + "M Tonnes";
       return (
-        "Production: " +
+        "Produced " +
         productionQuantity +
         "<br>" +
-        "Import: " +
+        "Imported " +
         importQuantity +
         "<br>" +
-        "Export: " +
+        "Exported " +
         exportQuantity
       );
     });
@@ -436,19 +447,19 @@ function refreshTopAxis() {
     .attr("data-html", true)
     .attr("title", function(d, i) {
       var productionQuantity =
-        (selectedData["production"][i] / oneMillion).toFixed(3) + "M";
+        (selectedData["production"][i] / oneMillion).toFixed(3) + "M Tonnes";
       var importQuantity =
-        (selectedData["import"][i] / oneMillion).toFixed(3) + "M";
+        (selectedData["import"][i] / oneMillion).toFixed(3) + "M Tonnes";
       var exportQuantity =
-        (selectedData["export"][i] / oneMillion).toFixed(3) + "M";
+        (selectedData["export"][i] / oneMillion).toFixed(3) + "M Tonnes";
       return (
-        "Production: " +
+        "Produced " +
         productionQuantity +
         "<br>" +
-        "Import: " +
+        "Imported " +
         importQuantity +
         "<br>" +
-        "Export: " +
+        "Exported " +
         exportQuantity
       );
     })
