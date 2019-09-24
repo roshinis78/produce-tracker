@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+
+<head>
+    <title>Produce Flow Tracker</title>
+
+    <!-- Bootstrap -->
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width initial-scale=1 shrink-to-fit=no'>
+    <link rel='stylesheet' href='https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css'
+        integrity='sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T' crossorigin='anonymous'>
+
+    <!-- Font Awesome -->
+    <script src='https://kit.fontawesome.com/70564c4270.js'></script>
+
+    <!-- My custom stylesheets -->
+    <link rel='stylesheet' href='styles/trade.css'>
+    <link rel='stylesheet' href='styles/common.css'>
+</head>
+
+<body>
+    <!-- bootstrap navbar repurposed as header -->
+    <nav class='navbar navbar-light navbar-expand-md bg-white'>
+        <div class='container'>
+            <button class='navbar-toggler mr-2' data-toggle='collapse' data-target='#navigation-links'>
+                <span class='navbar-toggler-icon'></span>
+            </button>
+
+            <a class='navbar-brand mr-auto' href='index.html'>Produce Flow Tracker</a>
+
+            <div class='collapse navbar-collapse' id='navigation-links'>
+                <ul class='navbar-nav ml-auto'>
+                    <li class='nav-item'><a class='nav-link' href='index.html'>Introduction</a></li>
+                    <li class='nav-item active'><a class='nav-link' href='#'>User Guide</a></li>
+                    <li class='nav-item '><a class='nav-link' href='produce.html'>Produce Analysis</a></li>
+                    <li class='nav-item'><a class='nav-link' href='time.html'>Time Analysis</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h1>User Guide</h1>
+        <hr>
+
+        <h3>Introduction</h3>
+        <p>
+            The purpose of a produce tracker is to be able to identify agriculture hotspots that might be damaging to
+            the
+            environment. When we pick a produce in a supermarket, we have very little idea how far it has traveled much
+            less
+            whether it is an outcome of deforestation or pollution or unsustainable practices. There are only fragmented
+            information on country-produce environmental issues. But a comprehensive tool that provides a global trade
+            of
+            produce is largely absent.
+
+        </p><p>
+            Such a global data can be found at one site. Food and Agriculture Organization, United Nations, gathers and
+            publishes various agriculture data at faostat.org. There is a simple visualization tool and the data can be
+            downloaded. However, to produce a comprehensive view, the data needs to be prepared and merged of crop
+            metrics -
+            production, import and export quantities against country and year.
+        </p><p>
+            The first version of this tool used the production as well as trade(export and import) data by country by
+            crop
+            by year. It is important to visualize all these three metrics side by side for useful analysis. This will
+            help
+            in giving a breakthrough for further investigation. Some scenarios to look for are - high export of a
+            produce
+            (investigate trade, monopoly, deforestation), unusually high import of one or two produce (trade imbalance),
+            impact on a produce-country of trade policies (soy export of US to China due to tariffs - which country is
+            likely to increase production of soy to meet the demand).
+        </p>
+        <hr>
+
+        <h3>Quick Start Guide</h3>
+        <p>The recommended analysis is to start with the Produce Analysis tab and click on View by produce.</p>
+        <p><i>Note: The visualization updates dynamically as you select the view options. </i></p>
+        <ul>
+            <li>Pick a metric - Production or Export or Import</li>
+            <li>Pick a produce of interest and year</li>
+            <li>(Optional visualization) - Animate the results trending over years</li>
+        </ul>
+
+        <p>This first analysis will give the information on country of interest based on the produce. For example, you
+            might
+            start with understanding top coffee exporters and want to further explore a country of interest. </p>
+        <p><i>Note: The visualization updates dynamically as you select the view options. </i></p>
+        <ul>
+            <li>Click the View by country </li>
+            <li>Pick a metric - production or export or import</li>
+            <li>Pick a country</li>
+            <li>Pick a year</li>
+        </ul>
+        <p>This helps in understanding what else is produced (or exported or imported) in that country. </p>
+        <p>Once you have narrowed a produce and a country of interest then go to the Time Analysis tab. You can see how
+            the
+            produce in that country trended over time. </p>
+        <hr>
+
+        <h3>Sample Analysis</h3>
+        <ul>
+            <li>Try the top producer of Pineapple for year 2014/15. </li>
+            <li>Try top exported of Pineapple for the same year. </li>
+            <li>Trend the Pineapple and the country of interest. </li>
+            <li>You will see Brazil and Costa Rica on the top.</li>
+        </ul>
+
+        <p>The agricultural practices behind the abundance of pineapple trade expose deforestation of land that is
+            cleared
+            to make way for more pineapple crops and unethical treatment of workers who handpick pineapples under the
+            hot
+            sun.</p>
+        <hr>
+
+        <h3>About The Data</h3>
+        <h5><i>Dimensions</i></h5>
+        <ul>
+            <li>Country (sometimes you may see aggregate regions like Western EU, South Asia etc.)</li>
+            <li>Item (this is the produce, at the moment it is all agricultural produce)</li>
+            <li>Year (2000 to 2016) </li>
+        </ul>
+        <h5><i>Measures</i></h5>
+        <ul>
+            <li>Production Quantity (tonnes)</li>
+            <li>Export Quantity (tonnes)</li>
+            <li>Import Quantity (tonnes)</li>
+        </ul>
+        <hr>
+
+        <p class='text-center'><i>Last updated on September 24, 2019.</i></p>
+    </div>
+
+
+    <!-- Bootstrap -->
+    <script src='https://code.jquery.com/jquery-3.3.1.slim.min.js'
+        integrity='sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo'
+        crossorigin='anonymous'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js'
+        integrity='sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1'
+        crossorigin='anonymous'></script>
+    <script src='https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js'
+        integrity='sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM'
+        crossorigin='anonymous'></script>
+
+    <!-- D3.js -->
+    <script src='https://d3js.org/d3.v5.min.js'></script>
+
+    <!-- Visualization code -->
+    <script src='scripts/trade.js'></script>
+</body>
+
+</html>
